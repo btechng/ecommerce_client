@@ -1,15 +1,14 @@
-
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    alert('Logged out successfully.');
-    navigate('/login');
+    localStorage.removeItem("token");
+    alert("Logged out successfully.");
+    navigate("/login");
   };
 
   return (
@@ -18,13 +17,22 @@ const Navbar = () => {
       <div className="space-x-4">
         {!token ? (
           <>
-            <Link to="/login" className="hover:underline">Login</Link>
-            <Link to="/register" className="hover:underline">Register</Link>
+            <Link to="/login" className="hover:underline">
+              Login
+            </Link>
+            <Link to="/register" className="hover:underline">
+              Register
+            </Link>
           </>
         ) : (
           <>
-            <Link to="/admin" className="hover:underline">Admin</Link>
-            <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded hover:bg-red-600">
+            <Link to="/admin" className="hover:underline">
+              Admin
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+            >
               Logout
             </button>
           </>
