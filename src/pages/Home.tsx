@@ -1,7 +1,8 @@
+// src/pages/Home.tsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Product {
   _id: string;
@@ -27,7 +28,6 @@ export default function Home() {
         const products: Product[] = res.data;
         setProducts(products);
         setFilteredProducts(products);
-
         const uniqueCategories = Array.from(
           new Set(products.map((p) => p.category))
         );
@@ -61,34 +61,39 @@ export default function Home() {
     );
   };
 
-  if (loading) return <div className="p-6 text-center">Loading...</div>;
+  if (loading)
+    return (
+      <div className="p-6 text-center text-sm sm:text-base">Loading...</div>
+    );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6 sm:py-10">
       {/* ✅ Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="text-center mb-10"
+        className="text-center mb-8 sm:mb-10"
       >
-        <h1 className="text-4xl font-extrabold text-indigo-700">TasknCart</h1>
-        <p className="text-gray-600 mt-2 text-lg">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-indigo-700">
+          TasknCart
+        </h1>
+        <p className="text-gray-600 mt-2 text-sm sm:text-lg">
           Where Tasks Meet the Cart – Buy & Sell with Ease.
         </p>
 
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-6">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-6 px-2">
           <input
             type="text"
             placeholder="Search products..."
             value={search}
             onChange={handleSearchChange}
-            className="w-full sm:w-64 border p-2 rounded"
+            className="w-full sm:w-64 border p-2 text-sm sm:text-base rounded"
           />
           <select
             value={selectedCategory}
             onChange={(e) => handleCategoryChange(e.target.value)}
-            className="border p-2 rounded w-full sm:w-40"
+            className="border p-2 text-sm sm:text-base rounded w-full sm:w-40"
           >
             {categories.map((cat) => (
               <option key={cat}>{cat}</option>
@@ -96,58 +101,69 @@ export default function Home() {
           </select>
           <Link
             to="/add-product"
-            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+            className="bg-indigo-600 text-white px-4 py-2 text-sm sm:text-base rounded hover:bg-indigo-700"
           >
             Sell Your Product
           </Link>
         </div>
       </motion.div>
 
-      {/* ✅ Products Grid */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-      >
-        {filteredProducts.length > 0 ? (
-          filteredProducts.map((product, index) => (
-            <motion.div
-              key={product._id}
-              whileHover={{ scale: 1.03 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Link
-                to={`/product/${product._id}`}
-                className="border rounded-lg shadow bg-white hover:shadow-lg"
+      {/* ✅ Products Grid - responsive width and animation */}
+      <div className="w-[90%] sm:w-full mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        >
+          <AnimatePresence>
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product, index) => (
+                <motion.div
+                  key={product._id}
+                  layout
+                  exit={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Link
+                    to={`/product/${product._id}`}
+                    className="border rounded-lg shadow bg-white hover:shadow-lg"
+                  >
+                    <img
+                      src={
+                        product.imageUrl || "https://via.placeholder.com/300"
+                      }
+                      alt={product.name}
+                      className="w-full h-48 object-cover rounded-t-lg"
+                    />
+                    <div className="p-4">
+                      <h2 className="text-base sm:text-lg font-semibold mb-1 truncate">
+                        {product.name}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">
+                        {product.description}
+                      </p>
+                      <p className="text-indigo-600 font-bold text-base sm:text-lg">
+                        ${product.price.toFixed(2)}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                className="col-span-full text-center text-gray-500"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
               >
-                <img
-                  src={product.imageUrl || "https://via.placeholder.com/300"}
-                  alt={product.name}
-                  className="w-full h-48 object-cover rounded-t-lg"
-                />
-                <div className="p-4">
-                  <h2 className="text-lg font-semibold mb-1 truncate">
-                    {product.name}
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-2 truncate">
-                    {product.description}
-                  </p>
-                  <p className="text-indigo-600 font-bold text-lg">
-                    ${product.price.toFixed(2)}
-                  </p>
-                </div>
-              </Link>
-            </motion.div>
-          ))
-        ) : (
-          <div className="col-span-full text-center text-gray-500">
-            No products found.
-          </div>
-        )}
-      </motion.div>
+                No products found.
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
     </div>
   );
 }

@@ -10,6 +10,9 @@ import PrivateRoute from "./components/PrivateRoute";
 import CategoryPage from "./pages/CategoryPage";
 import ProductDetails from "./pages/ProductDetails";
 import ProductEdit from "./pages/ProductEdit";
+import PublicAddProduct from "./pages/PublicAddProduct";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
   return (
@@ -38,7 +41,11 @@ const App = () => {
         <Route path="/category/:categoryName" element={<CategoryPage />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/admin/edit/:id" element={<ProductEdit />} />
+        <Route path="/add-product" element={<PublicAddProduct />} />
       </Routes>
+
+      {/* ✅ Toast container for notifications */}
+      <ToastContainer position="top-center" autoClose={3000} />
     </>
   );
 };
