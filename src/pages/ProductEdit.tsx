@@ -5,7 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 const CLOUDINARY_UPLOAD_PRESET = "btechngecommerce";
 const CLOUDINARY_CLOUD_NAME = "dkjvfszog";
 
-export default function EditProduct() {
+export default function ProductEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
