@@ -19,6 +19,8 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  const isAdmin = role === "admin";
 
   useEffect(() => {
     axios
@@ -42,6 +44,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
     alert("Logged out successfully.");
     navigate("/login");
   };
@@ -98,7 +101,7 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* 🔍 Search bar */}
+          {/* Search Bar */}
           <form
             onSubmit={handleSearch}
             className="flex border rounded overflow-hidden"
@@ -115,7 +118,7 @@ const Navbar = () => {
             </button>
           </form>
 
-          {/* 🛒 Cart with Badge */}
+          {/* Cart */}
           <Link
             to="/cart"
             className="relative text-gray-700 hover:text-indigo-600"
@@ -142,9 +145,14 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link to="/admin" className="text-gray-700 hover:text-indigo-600">
-                Admin
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="text-gray-700 hover:text-indigo-600"
+                >
+                  Admin
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
                 className="text-red-500 hover:text-red-700"
@@ -216,9 +224,11 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link to="/admin" onClick={() => setMenuOpen(false)}>
-                Admin
-              </Link>
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setMenuOpen(false)}>
+                  Admin
+                </Link>
+              )}
               <button
                 onClick={() => {
                   setMenuOpen(false);

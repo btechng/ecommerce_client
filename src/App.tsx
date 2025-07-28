@@ -8,6 +8,8 @@ import AddProduct from "./pages/AddProduct";
 import Navbar from "./components/Navbar";
 import PrivateRoute from "./components/PrivateRoute";
 import CategoryPage from "./pages/CategoryPage";
+import ProductDetails from "./pages/ProductDetails";
+import ProductEdit from "./pages/ProductEdit";
 
 const App = () => {
   return (
@@ -34,6 +36,8 @@ const App = () => {
           }
         />
         <Route path="/category/:categoryName" element={<CategoryPage />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/admin/edit/:id" element={<ProductEdit />} />
       </Routes>
     </>
   );

@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const CLOUDINARY_UPLOAD_PRESET = "btechngecommerce";
 const CLOUDINARY_CLOUD_NAME = "dkjvfszog";
 
-export default function AddProduct() {
+export default function EditProduct() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
@@ -13,23 +17,33 @@ export default function AddProduct() {
   const [location, setLocation] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
+    axios
+      .get(`https://ecommerce-server-or19.onrender.com/api/products/${id}`)
+      .then((res) => {
+        const p = res.data;
+        setName(p.name);
+        setPrice(p.price);
+        setDescription(p.description || "");
+        setCategory(p.category || "");
+        setLocation(p.location || "");
+        setPhoneNumber(p.phoneNumber || "");
+        setImageUrl(p.imageUrl || "");
+      });
+
     axios
       .get(
         "https://ecommerce-server-or19.onrender.com/api/products/categories/list"
       )
-      .then((res) => setCategories(res.data))
-      .catch(() => console.warn("Failed to load categories"));
-  }, []);
+      .then((res) => setCategories(res.data));
+  }, [id]);
 
   const handleUploadImage = async (): Promise<string> => {
-    if (!imageFile) return "";
+    if (!imageFile) return imageUrl;
     const formData = new FormData();
     formData.append("file", imageFile);
     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
@@ -42,36 +56,23 @@ export default function AddProduct() {
       return res.data.secure_url;
     } catch {
       alert("Image upload failed");
-      return "";
+      return imageUrl;
     } finally {
       setUploading(false);
     }
   };
 
-  const handleAdd = async () => {
-    if (
-      !name ||
-      !price ||
-      !category ||
-      !description ||
-      !location ||
-      !phoneNumber
-    ) {
-      alert("Please fill all fields");
-      return;
-    }
-
-    const imageUrl = await handleUploadImage();
-
+  const handleUpdate = async () => {
+    const newImageUrl = await handleUploadImage();
     try {
-      await axios.post(
-        "https://ecommerce-server-or19.onrender.com/api/products",
+      await axios.put(
+        `https://ecommerce-server-or19.onrender.com/api/products/${id}`,
         {
           name,
           price: parseFloat(price),
           description,
           category,
-          imageUrl,
+          imageUrl: newImageUrl,
           location,
           phoneNumber,
         },
@@ -79,16 +80,16 @@ export default function AddProduct() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      alert("Product added!");
+      alert("Product updated!");
       navigate("/admin");
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to add product");
+      alert(err.response?.data?.error || "Failed to update product");
     }
   };
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 border rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Add New Product</h2>
+      <h2 className="text-2xl font-bold mb-4">Edit Product</h2>
 
       <input
         className="w-full border p-2 mb-3"
@@ -141,11 +142,11 @@ export default function AddProduct() {
       />
 
       <button
-        onClick={handleAdd}
-        className="w-full bg-green-600 text-white py-2 rounded"
+        onClick={handleUpdate}
+        className="w-full bg-blue-600 text-white py-2 rounded"
         disabled={uploading}
       >
-        {uploading ? "Uploading..." : "Add Product"}
+        {uploading ? "Uploading..." : "Update Product"}
       </button>
     </div>
   );
