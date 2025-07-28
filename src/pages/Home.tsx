@@ -96,7 +96,7 @@ export default function Home() {
           </select>
           <Link
             to="/add-product"
-            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition"
+            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
           >
             Sell Your Product
           </Link>
@@ -121,7 +121,7 @@ export default function Home() {
             >
               <Link
                 to={`/product/${product._id}`}
-                className="border rounded-lg shadow hover:shadow-md transition duration-200 bg-white"
+                className="border rounded-lg shadow bg-white hover:shadow-lg"
               >
                 <img
                   src={product.imageUrl || "https://via.placeholder.com/300"}
