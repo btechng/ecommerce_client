@@ -4,12 +4,13 @@ import { Menu, X, Monitor, Shirt, Home, ShoppingCart } from "lucide-react";
 import axios from "axios";
 import { motion } from "framer-motion";
 
-// 👇 Slugify helper
+// ✅ Slugify matches backend (slugify(..., { lower: true, strict: true }))
 const slugify = (text: string) =>
   text
     .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]+/g, "");
+    .replace(/[^\w\s-]/g, "") // remove special characters
+    .trim()
+    .replace(/\s+/g, "-"); // replace spaces with dashes
 
 const categoryIcons: Record<string, JSX.Element> = {
   electronics: <Monitor className="w-4 h-4 inline mr-1" />,
@@ -77,7 +78,7 @@ const Navbar = () => {
           />
         </Link>
 
-        {/* Desktop Nav */}
+        {/* ✅ Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
           <Link
             to="/"
@@ -170,7 +171,7 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Toggle */}
+        {/* ✅ Mobile Menu Button */}
         <button
           className="md:hidden text-white"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -179,7 +180,7 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ✅ Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden bg-white/90 px-4 pb-4 flex flex-col space-y-3 text-black">
           <form
