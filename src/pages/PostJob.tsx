@@ -32,14 +32,21 @@ export default function PostJob() {
           imageUrl: "https://via.placeholder.com/300",
           category: "Job/Vacancy",
           location,
-          contactEmail: email,
+          phoneNumber: email, // 👈 mapped to phoneNumber field in DB
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
         }
       );
 
       toast.success("Job posted successfully!");
       navigate("/");
-    } catch (err) {
-      toast.error("Failed to post job");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error || "Failed to post job. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -107,7 +114,7 @@ export default function PostJob() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
           >
             {loading ? "Posting..." : "Post Job"}
           </button>
