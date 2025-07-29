@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Monitor, Shirt, Home, ShoppingCart } from "lucide-react";
 import axios from "axios";
+import { motion } from "framer-motion";
 
 const categoryIcons: Record<string, JSX.Element> = {
   electronics: <Monitor className="w-4 h-4 inline mr-1" />,
@@ -52,34 +53,41 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-white border-b shadow-sm z-50 relative">
+    <nav className="absolute top-0 left-0 w-full z-50 backdrop-blur-sm bg-white/10 border-b border-white/20">
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-        <Link
-          to="/"
-          className="text-2xl font-bold text-indigo-600 tracking-wide"
-        >
-          TnC
+        <Link to="/" className="flex items-center">
+          <motion.img
+            src="https://i.ibb.co/k2hVDH4r"
+            alt="Logo"
+            className="h-10 w-auto object-contain"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            whileHover={{
+              scale: [1, 1.1, 0.95, 1.05, 1],
+              transition: { duration: 0.6 },
+            }}
+            transition={{ type: "spring", stiffness: 200, damping: 10 }}
+          />
         </Link>
 
-        {/* Desktop */}
+        {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-6">
           <Link
             to="/"
             className={`hover:text-indigo-600 ${
-              isActive("/") ? "text-indigo-600 font-semibold" : "text-gray-700"
+              isActive("/") ? "text-indigo-600 font-semibold" : "text-white"
             }`}
           >
             Home
           </Link>
 
-          {/* Category Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowCategories(!showCategories)}
-              className={`hover:text-indigo-600 ${
+              className={`hover:text-indigo-500 ${
                 location.pathname.startsWith("/category")
                   ? "text-indigo-600 font-semibold"
-                  : "text-gray-700"
+                  : "text-white"
               }`}
             >
               Categories ▾
@@ -101,7 +109,6 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Search Bar */}
           <form
             onSubmit={handleSearch}
             className="flex border rounded overflow-hidden"
@@ -118,10 +125,9 @@ const Navbar = () => {
             </button>
           </form>
 
-          {/* Cart */}
           <Link
             to="/cart"
-            className="relative text-gray-700 hover:text-indigo-600"
+            className="relative text-white hover:text-indigo-400"
           >
             <ShoppingCart className="w-5 h-5" />
             {cartCount > 0 && (
@@ -133,29 +139,23 @@ const Navbar = () => {
 
           {!token ? (
             <>
-              <Link to="/login" className="text-gray-700 hover:text-indigo-600">
+              <Link to="/login" className="text-white hover:text-indigo-400">
                 Login
               </Link>
-              <Link
-                to="/register"
-                className="text-gray-700 hover:text-indigo-600"
-              >
+              <Link to="/register" className="text-white hover:text-indigo-400">
                 Register
               </Link>
             </>
           ) : (
             <>
               {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="text-gray-700 hover:text-indigo-600"
-                >
+                <Link to="/admin" className="text-white hover:text-indigo-400">
                   Admin
                 </Link>
               )}
               <button
                 onClick={handleLogout}
-                className="text-red-500 hover:text-red-700"
+                className="text-red-400 hover:text-red-600"
               >
                 Logout
               </button>
@@ -163,15 +163,18 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Hamburger */}
-        <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
+        {/* Mobile Menu Toggle */}
+        <button
+          className="md:hidden text-white"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
           {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden bg-white px-4 pb-4 flex flex-col space-y-3">
+        <div className="md:hidden bg-white/90 px-4 pb-4 flex flex-col space-y-3 text-black">
           <form
             onSubmit={handleSearch}
             className="flex border rounded overflow-hidden"

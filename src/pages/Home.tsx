@@ -1,8 +1,7 @@
-// src/pages/Home.tsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface Product {
   _id: string;
@@ -12,6 +11,8 @@ interface Product {
   imageUrl?: string;
   category: string;
 }
+
+const IMAGE_URL = "https://i.ibb.co/f8G9hf6/naijapress.jpg";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -25,11 +26,11 @@ export default function Home() {
     axios
       .get("https://ecommerce-server-or19.onrender.com/api/products")
       .then((res) => {
-        const products: Product[] = res.data;
-        setProducts(products);
-        setFilteredProducts(products);
+        const data: Product[] = res.data;
+        setProducts(data);
+        setFilteredProducts(data);
         const uniqueCategories = Array.from(
-          new Set(products.map((p) => p.category))
+          new Set(data.map((p) => p.category))
         );
         setCategories(["All", ...uniqueCategories]);
       })
@@ -37,132 +38,130 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleCategoryChange = (cat: string) => {
-    setSelectedCategory(cat);
-    if (cat === "All") {
-      setFilteredProducts(products);
-    } else {
-      setFilteredProducts(products.filter((p) => p.category === cat));
-    }
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase();
-    setSearch(value);
-    const filtered = products.filter(
+  useEffect(() => {
+    let filtered = products.filter(
       (p) =>
-        p.name.toLowerCase().includes(value) ||
-        p.description.toLowerCase().includes(value)
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.description.toLowerCase().includes(search.toLowerCase())
     );
-    setFilteredProducts(
-      selectedCategory === "All"
-        ? filtered
-        : filtered.filter((p) => p.category === selectedCategory)
-    );
-  };
 
-  if (loading)
-    return (
-      <div className="p-6 text-center text-sm sm:text-base">Loading...</div>
-    );
+    if (selectedCategory !== "All") {
+      filtered = filtered.filter((p) => p.category === selectedCategory);
+    }
+
+    setFilteredProducts(filtered);
+  }, [search, selectedCategory, products]);
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6 sm:py-10">
-      {/* ✅ Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="text-center mb-8 sm:mb-10"
-      >
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-indigo-700">
-          TasknCart
-        </h1>
-        <p className="text-gray-600 mt-2 text-sm sm:text-lg">
-          Where Tasks Meet the Cart – Buy & Sell with Ease.
-        </p>
+    <div
+      className="relative min-h-screen bg-cover bg-fixed bg-no-repeat"
+      style={{ backgroundImage: `url(${IMAGE_URL})` }}
+    >
+      {/* 🔳 Dark Overlay */}
+      <div className="absolute inset-0 bg-black/70 z-0" />
 
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-6 px-2">
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={search}
-            onChange={handleSearchChange}
-            className="w-full sm:w-64 border p-2 text-sm sm:text-base rounded"
-          />
-          <select
-            value={selectedCategory}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className="border p-2 text-sm sm:text-base rounded w-full sm:w-40"
-          >
-            {categories.map((cat) => (
-              <option key={cat}>{cat}</option>
-            ))}
-          </select>
-          <Link
-            to="/add-product"
-            className="bg-indigo-600 text-white px-4 py-2 text-sm sm:text-base rounded hover:bg-indigo-700"
-          >
-            Sell Your Product
-          </Link>
+      {/* ✅ Content Layer */}
+      <div className="relative z-10">
+        {/* ✅ Hero Section */}
+        <div className="w-full py-8 px-4 text-center text-white">
+          <div className="flex justify-center mb-4">
+            <motion.img
+              src={IMAGE_URL}
+              alt="Logo"
+              className="h-20 rounded-full"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileHover={{
+                scale: [1, 1.1, 0.95, 1.05, 1],
+                transition: { duration: 0.6 },
+              }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+          </div>
+          <p className="text-lg mb-4 font-medium">
+            Where Tasks Meet the Cart – Buy & Sell with Ease
+          </p>
+
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-3xl mx-auto">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:w-64 border p-2 rounded text-black"
+            />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border p-2 rounded w-full sm:w-40 text-black"
+            >
+              {categories.map((cat) => (
+                <option key={cat}>{cat}</option>
+              ))}
+            </select>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Link
+                to="/add-product"
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
+              >
+                Sell Your Product
+              </Link>
+              <Link
+                to="/post-job"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+              >
+                Post a Job
+              </Link>
+            </div>
+          </div>
         </div>
-      </motion.div>
 
-      {/* ✅ Products Grid - responsive width and animation */}
-      <div className="w-[90%] sm:w-full mx-auto">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-        >
-          <AnimatePresence>
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product, index) => (
-                <motion.div
-                  key={product._id}
-                  layout
-                  exit={{ opacity: 0, y: 10 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Link
-                    to={`/product/${product._id}`}
-                    className="border rounded-lg shadow bg-white hover:shadow-lg"
+        {/* ✅ Product Grid */}
+        <div className="p-4 max-w-6xl mx-auto">
+          {loading ? (
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-gray-300/40 animate-pulse h-56 rounded-xl"
+                ></div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 items-stretch">
+              {filteredProducts.map((product) => (
+                <Link to={`/product/${product._id}`} key={product._id}>
+                  <motion.div
+                    whileHover={{ scale: 1.04 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 15,
+                    }}
+                    className="bg-white bg-opacity-90 rounded-xl shadow-md p-3 flex flex-col h-full hover:shadow-lg transition-shadow"
                   >
                     <img
                       src={
                         product.imageUrl || "https://via.placeholder.com/300"
                       }
                       alt={product.name}
-                      className="w-full h-48 object-cover rounded-t-lg"
+                      className="rounded-lg mb-2 object-cover h-40 w-full"
                     />
-                    <div className="p-4">
-                      <h2 className="text-base sm:text-lg font-semibold mb-1 truncate">
-                        {product.name}
-                      </h2>
-                      <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">
-                        {product.description}
-                      </p>
-                      <p className="text-indigo-600 font-bold text-base sm:text-lg">
-                        ${product.price.toFixed(2)}
-                      </p>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))
-            ) : (
-              <motion.div
-                className="col-span-full text-center text-gray-500"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                No products found.
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+                    <p className="text-base font-semibold break-words">
+                      {product.name}
+                    </p>
+                    <p className="text-sm text-gray-600 truncate">
+                      {product.description}
+                    </p>
+                    <p className="text-indigo-700 font-bold mt-1">
+                      ₦{product.price.toLocaleString()}
+                    </p>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
