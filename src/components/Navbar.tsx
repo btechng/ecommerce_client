@@ -4,6 +4,13 @@ import { Menu, X, Monitor, Shirt, Home, ShoppingCart } from "lucide-react";
 import axios from "axios";
 import { motion } from "framer-motion";
 
+// 👇 Slugify helper
+const slugify = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "");
+
 const categoryIcons: Record<string, JSX.Element> = {
   electronics: <Monitor className="w-4 h-4 inline mr-1" />,
   fashion: <Shirt className="w-4 h-4 inline mr-1" />,
@@ -97,7 +104,7 @@ const Navbar = () => {
                 {categories.map((cat) => (
                   <Link
                     key={cat}
-                    to={`/category/${cat.toLowerCase()}`}
+                    to={`/category/${slugify(cat)}`}
                     className="block px-4 py-2 text-gray-700 hover:bg-indigo-100 capitalize"
                     onClick={() => setShowCategories(false)}
                   >
@@ -163,7 +170,7 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Menu Toggle */}
+        {/* Mobile Toggle */}
         <button
           className="md:hidden text-white"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -201,7 +208,7 @@ const Navbar = () => {
               {categories.map((cat) => (
                 <Link
                   key={cat}
-                  to={`/category/${cat.toLowerCase()}`}
+                  to={`/category/${slugify(cat)}`}
                   onClick={() => setMenuOpen(false)}
                   className="capitalize"
                 >
