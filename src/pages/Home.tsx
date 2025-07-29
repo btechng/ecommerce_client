@@ -18,10 +18,8 @@ const IMAGE_URL =
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [jobs, setJobs] = useState<Product[]>([]);
-
   const [searchJobs, setSearchJobs] = useState("");
   const [searchProducts, setSearchProducts] = useState("");
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,17 +40,21 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredJobs = jobs.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchJobs.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchJobs.toLowerCase())
-  );
+  const filteredJobs = jobs
+    .filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchJobs.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchJobs.toLowerCase())
+    )
+    .slice(0, 4);
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchProducts.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchProducts.toLowerCase())
-  );
+  const filteredProducts = products
+    .filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchProducts.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchProducts.toLowerCase())
+    )
+    .slice(0, 12);
 
   return (
     <div
@@ -61,27 +63,25 @@ export default function Home() {
     >
       <div className="absolute inset-0 bg-black/70 z-0" />
       <div className="relative z-10">
-        {/* HERO SECTION */}
+        {/* ✅ HERO SECTION */}
         <div className="w-full py-8 px-4 text-center text-white">
-          <div className="flex justify-center mb-4">
-            <motion.img
-              src={IMAGE_URL}
-              alt="Logo"
-              className="h-20 rounded-full"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              whileHover={{
-                scale: [1, 1.1, 0.95, 1.05, 1],
-                transition: { duration: 0.6 },
-              }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            />
-          </div>
+          <motion.img
+            src={IMAGE_URL}
+            alt="Logo"
+            className="h-20 rounded-full mx-auto mb-4"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            whileHover={{
+              scale: [1, 1.1, 0.95, 1.05, 1],
+              transition: { duration: 0.6 },
+            }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
           <p className="text-lg mb-4 font-medium">
             Find Products and Job Opportunities on One Platform
           </p>
 
-          {/* ACTION BUTTONS */}
+          {/* ✅ ACTION BUTTONS */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-3xl mx-auto">
             <Link
               to="/add-product"
@@ -107,7 +107,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* JOB SECTION */}
+        {/* ✅ JOBS SECTION */}
         <div className="p-4 max-w-6xl mx-auto">
           <h2 className="text-white text-xl font-semibold mb-2">
             🟡 Jobs & Vacancies
@@ -121,40 +121,49 @@ export default function Home() {
           />
 
           {loading ? (
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2].map((_, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((_, i) => (
                 <div
                   key={i}
-                  className="bg-gray-300/40 animate-pulse h-40 rounded-xl"
+                  className="bg-gray-300/40 animate-pulse h-36 rounded-xl"
                 ></div>
               ))}
             </div>
           ) : filteredJobs.length === 0 ? (
             <p className="text-white">No jobs found.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              {filteredJobs.map((job) => (
-                <Link to={`/product/${job._id}`} key={job._id}>
-                  <motion.div
-                    whileHover={{ scale: 1.03 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                    className="bg-white bg-opacity-90 rounded-xl shadow-md p-4 hover:shadow-lg"
-                  >
-                    <span className="text-sm bg-yellow-200 text-yellow-800 font-semibold w-fit px-2 py-0.5 rounded mb-1">
-                      {job.category}
-                    </span>
-                    <h3 className="font-bold text-md">{job.name}</h3>
-                    <p className="text-sm text-gray-700 line-clamp-3">
-                      {job.description}
-                    </p>
-                  </motion.div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                {filteredJobs.map((job) => (
+                  <Link to={`/product/${job._id}`} key={job._id}>
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      className="bg-white bg-opacity-90 rounded-xl shadow-md p-4 h-full flex flex-col justify-between"
+                    >
+                      <span className="text-sm bg-yellow-200 text-yellow-800 font-semibold w-fit px-2 py-0.5 rounded mb-1">
+                        {job.category}
+                      </span>
+                      <h3 className="font-bold text-md">{job.name}</h3>
+                      <p className="text-sm text-gray-700 line-clamp-3">
+                        {job.description}
+                      </p>
+                    </motion.div>
+                  </Link>
+                ))}
+              </div>
+              <div className="text-center mb-8">
+                <Link
+                  to="/category/jobvacancy"
+                  className="text-yellow-400 hover:underline font-semibold"
+                >
+                  See All Jobs →
                 </Link>
-              ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
 
-        {/* PRODUCT SECTION */}
+        {/* ✅ PRODUCT SECTION */}
         <div className="p-4 max-w-6xl mx-auto">
           <h2 className="text-white text-xl font-semibold mb-2">🛒 Products</h2>
           <input
@@ -177,34 +186,48 @@ export default function Home() {
           ) : filteredProducts.length === 0 ? (
             <p className="text-white">No products found.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
-              {filteredProducts.map((product) => (
-                <Link to={`/product/${product._id}`} key={product._id}>
-                  <motion.div
-                    whileHover={{ scale: 1.04 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                    className="bg-white bg-opacity-90 rounded-xl shadow-md p-3 flex flex-col h-full hover:shadow-lg transition-shadow"
-                  >
-                    <img
-                      src={
-                        product.imageUrl || "https://via.placeholder.com/300"
-                      }
-                      alt={product.name}
-                      className="rounded-lg mb-2 object-cover h-40 w-full"
-                    />
-                    <p className="text-base font-semibold break-words">
-                      {product.name}
-                    </p>
-                    <p className="text-sm text-gray-600 truncate">
-                      {product.description}
-                    </p>
-                    <p className="text-indigo-700 font-bold mt-1">
-                      ₦{product.price.toLocaleString()}
-                    </p>
-                  </motion.div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {filteredProducts.map((product) => (
+                  <Link to={`/product/${product._id}`} key={product._id}>
+                    <motion.div
+                      whileHover={{ scale: 1.04 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 15,
+                      }}
+                      className="bg-white bg-opacity-90 rounded-xl shadow-md p-3 flex flex-col h-full hover:shadow-lg transition-shadow"
+                    >
+                      <img
+                        src={
+                          product.imageUrl || "https://via.placeholder.com/300"
+                        }
+                        alt={product.name}
+                        className="rounded-lg mb-2 object-cover h-32 w-full"
+                      />
+                      <p className="text-base font-semibold break-words">
+                        {product.name}
+                      </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        {product.description}
+                      </p>
+                      <p className="text-indigo-700 font-bold mt-1">
+                        ₦{product.price.toLocaleString()}
+                      </p>
+                    </motion.div>
+                  </Link>
+                ))}
+              </div>
+              <div className="text-center mt-6 mb-8">
+                <Link
+                  to="/products"
+                  className="text-blue-400 hover:underline font-semibold"
+                >
+                  See All Products →
                 </Link>
-              ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>
