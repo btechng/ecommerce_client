@@ -66,7 +66,6 @@ export default function ProductDetails() {
       setComment("");
       setRating(5);
 
-      // Refresh product
       const res = await axios.get(
         `https://ecommerce-server-or19.onrender.com/api/products/${id}`
       );
@@ -78,6 +77,10 @@ export default function ProductDetails() {
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (!product) return <div className="p-4">Product not found</div>;
+
+  const isJobVacancy =
+    product.category?.toLowerCase().replace(/\s+/g, "") === "job/vacancy" ||
+    product.category?.toLowerCase().replace(/\s+/g, "") === "jobvacancy";
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -92,9 +95,13 @@ export default function ProductDetails() {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             {product.name}
           </h1>
-          <p className="text-xl text-indigo-600 font-semibold mb-2">
-            ${product.price.toFixed(2)}
-          </p>
+
+          {!isJobVacancy && (
+            <p className="text-xl text-indigo-600 font-semibold mb-2">
+              ₦{product.price?.toLocaleString() || "Contact"}
+            </p>
+          )}
+
           <p className="text-gray-600 mb-4">{product.description}</p>
 
           {product.rating && (
@@ -109,7 +116,7 @@ export default function ProductDetails() {
             </p>
           )}
 
-          {product.phoneNumber && (
+          {!isJobVacancy && product.phoneNumber && (
             <>
               <p className="text-sm text-gray-600">
                 📞 <strong>Phone:</strong> {product.phoneNumber}
@@ -144,7 +151,7 @@ export default function ProductDetails() {
 
       {/* Reviews */}
       <div className="mt-10">
-        <h2 className="text-2xl font-semibold mb-4">Customer Reviews</h2>
+        <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
 
         {product.reviews && product.reviews.length > 0 ? (
           <div className="space-y-4">

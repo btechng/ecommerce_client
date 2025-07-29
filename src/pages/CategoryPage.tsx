@@ -1,4 +1,3 @@
-// src/pages/CategoryPage.tsx
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
@@ -10,23 +9,31 @@ interface Product {
   description?: string;
   imageUrl?: string;
   category: string;
+  location?: string;
 }
 
 export default function CategoryPage() {
-  const { categoryName } = useParams();
+  const { categoryName } = useParams(); // slug like "jobvacancy"
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const isJobCategory = categoryName
+    ?.toLowerCase()
+    .replace(/\s+/g, "")
+    .includes("job");
 
   useEffect(() => {
+    if (!categoryName) return;
+
+    setLoading(true);
+
     axios
-      .get("https://ecommerce-server-or19.onrender.com/api/products")
-      .then((res) => {
-        const filtered = res.data.filter(
-          (product: Product) =>
-            product.category.toLowerCase() === categoryName?.toLowerCase()
-        );
-        setProducts(filtered);
-      })
-      .catch(() => alert("Failed to load products"));
+      .get(
+        `https://ecommerce-server-or19.onrender.com/api/products/category/${categoryName}`
+      )
+      .then((res) => setProducts(res.data))
+      .catch(() => alert("Failed to load products"))
+      .finally(() => setLoading(false));
   }, [categoryName]);
 
   return (
@@ -40,17 +47,21 @@ export default function CategoryPage() {
       </div>
 
       <h2 className="text-3xl font-bold text-gray-800 mb-4 capitalize">
-        {categoryName} Products
+        {categoryName?.replace(/-/g, " ")}{" "}
+        {isJobCategory ? "Listings" : "Products"}
       </h2>
 
-      {products.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-500">Loading...</p>
+      ) : products.length === 0 ? (
         <p className="text-gray-600">No products found in this category.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (
-            <div
+            <Link
+              to={`/product/${product._id}`}
               key={product._id}
-              className="border rounded-lg shadow-sm hover:shadow-md transition"
+              className="border rounded-lg shadow-sm hover:shadow-md transition bg-white"
             >
               <img
                 src={product.imageUrl || "https://via.placeholder.com/300"}
@@ -58,17 +69,24 @@ export default function CategoryPage() {
                 className="w-full h-48 object-cover rounded-t-lg"
               />
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800">
+                <h3 className="text-lg font-semibold text-gray-800 truncate">
                   {product.name}
                 </h3>
-                <p className="text-sm text-gray-500 mb-2">
+                <p className="text-sm text-gray-500 mb-2 line-clamp-2">
                   {product.description}
                 </p>
-                <p className="text-indigo-600 font-bold">
-                  ${product.price.toFixed(2)}
-                </p>
+                {product.location && (
+                  <p className="text-sm text-gray-600 mb-1">
+                    📍 {product.location}
+                  </p>
+                )}
+                {!isJobCategory && (
+                  <p className="text-indigo-600 font-bold">
+                    ₦{product.price?.toLocaleString() || "Contact"}
+                  </p>
+                )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
