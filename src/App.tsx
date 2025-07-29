@@ -20,6 +20,7 @@ import Terms from "./pages/Terms";
 import Footer from "./components/Footer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import PostJob from "./pages/PostJob";
 
 const App = () => {
   return (
@@ -57,6 +58,7 @@ const App = () => {
         <Route path="/disclaimer" element={<Disclaimer />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/post-job" element={<PostJob />} />
       </Routes>
 
       {/* ✅ Always-visible footer */}

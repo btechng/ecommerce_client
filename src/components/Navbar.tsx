@@ -57,7 +57,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <motion.img
-            src="https://i.ibb.co/k2hVDH4r"
+            src="https://lh3.googleusercontent.com/d/1XhHYygaVSvHitgWS3DCqg2rFyFrPobA0"
             alt="Logo"
             className="h-10 w-auto object-contain"
             initial={{ scale: 0 }}

@@ -12,7 +12,8 @@ interface Product {
   category: string;
 }
 
-const IMAGE_URL = "https://i.ibb.co/f8G9hf6/naijapress.jpg";
+const IMAGE_URL =
+  "https://lh3.googleusercontent.com/d/1xHmVJhIRbXYUYZ0pAIXDVdbapWq7dxl6";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
