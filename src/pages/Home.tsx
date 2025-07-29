@@ -10,6 +10,7 @@ interface Product {
   price: number;
   imageUrl?: string;
   category: string;
+  location?: string;
 }
 
 const IMAGE_URL =
@@ -21,12 +22,13 @@ export default function Home() {
   const [searchJobs, setSearchJobs] = useState("");
   const [searchProducts, setSearchProducts] = useState("");
   const [loading, setLoading] = useState(true);
+  const [viewAllProducts, setViewAllProducts] = useState(false);
 
   useEffect(() => {
     axios
       .get("https://ecommerce-server-or19.onrender.com/api/products")
       .then((res) => {
-        const data: Product[] = res.data.reverse(); // newest first
+        const data: Product[] = res.data.reverse();
         const jobItems = data.filter((p) =>
           p.category.toLowerCase().includes("job/vacancy")
         );
@@ -54,7 +56,7 @@ export default function Home() {
         p.name.toLowerCase().includes(searchProducts.toLowerCase()) ||
         p.description.toLowerCase().includes(searchProducts.toLowerCase())
     )
-    .slice(0, 12);
+    .slice(0, viewAllProducts ? undefined : 12);
 
   return (
     <div
@@ -81,19 +83,18 @@ export default function Home() {
             Find Products and Job Opportunities on One Platform
           </p>
 
-          {/* ✅ ACTION BUTTONS */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-3xl mx-auto">
             <Link
               to="/add-product"
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full sm:w-auto"
             >
-              Sell Your Product
+              🛒 Sell Your Product
             </Link>
             <Link
               to="/post-job"
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full sm:w-auto"
             >
-              Post a Job
+              📢 Post a Job
             </Link>
           </div>
 
@@ -102,7 +103,7 @@ export default function Home() {
               to="/category/jobvacancy"
               className="bg-yellow-500 text-black font-semibold px-6 py-3 rounded-lg block max-w-xl mx-auto hover:bg-yellow-600 transition"
             >
-              Check Out Recent Jobs And Vacancies
+              🔎 Check Out Recent Jobs And Vacancies
             </Link>
           </div>
         </div>
@@ -144,9 +145,14 @@ export default function Home() {
                         {job.category}
                       </span>
                       <h3 className="font-bold text-md">{job.name}</h3>
-                      <p className="text-sm text-gray-700 line-clamp-3">
+                      <p className="text-sm text-gray-700 line-clamp-3 mb-1">
                         {job.description}
                       </p>
+                      {job.location && (
+                        <p className="text-xs text-gray-600 italic">
+                          📍 {job.location}
+                        </p>
+                      )}
                     </motion.div>
                   </Link>
                 ))}
@@ -163,7 +169,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* ✅ PRODUCT SECTION */}
+        {/* ✅ PRODUCTS SECTION */}
         <div className="p-4 max-w-6xl mx-auto">
           <h2 className="text-white text-xl font-semibold mb-2">🛒 Products</h2>
           <input
@@ -220,16 +226,36 @@ export default function Home() {
                 ))}
               </div>
               <div className="text-center mt-6 mb-8">
-                <Link
-                  to="/products"
+                <button
+                  onClick={() => setViewAllProducts(true)}
                   className="text-blue-400 hover:underline font-semibold"
                 >
-                  See All Products →
-                </Link>
+                  {viewAllProducts
+                    ? "Showing All Products"
+                    : "See All Products →"}
+                </button>
               </div>
             </>
           )}
         </div>
+
+        {/* ✅ WHATSAPP FLOATING BUTTON */}
+        <a
+          href="https://wa.me/2348148494924"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg z-50 transition"
+          title="Chat on WhatsApp"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="white"
+            viewBox="0 0 24 24"
+            className="h-6 w-6"
+          >
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.1.543 4.07 1.5 5.787L0 24l6.39-1.647A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm6.217 17.07c-.261.734-1.526 1.438-2.112 1.531-.586.095-1.323.135-2.126-.157-.97-.335-2.033-.73-3.536-2.208-1.306-1.3-2.19-2.902-2.449-3.392-.26-.49-.523-1.283-.106-1.897.417-.615.94-.679 1.263-.692.323-.013.622-.007.896.403.276.41.936 1.323 1.015 1.421.079.097.132.217.026.35-.106.134-.158.217-.313.337-.158.12-.33.256-.47.43-.14.173-.286.31-.122.605.163.294.727 1.2 1.56 1.79 1.074.76 1.98 1 2.27 1.112.29.112.46.093.632-.06.173-.155.737-.856.935-1.15.198-.294.39-.247.664-.148.274.1 1.73.816 2.027.963.298.148.497.222.57.344.073.122.073.705-.188 1.439z" />
+          </svg>
+        </a>
       </div>
     </div>
   );
