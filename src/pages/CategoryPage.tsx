@@ -47,7 +47,9 @@ export default function CategoryPage() {
   }, [categoryName]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 pt-24 pb-10">
+      {" "}
+      {/* <-- pt-24 adds top spacing */}
       {/* Breadcrumbs */}
       <div className="mb-6 text-sm text-gray-500">
         <Link to="/" className="hover:underline">
@@ -55,12 +57,10 @@ export default function CategoryPage() {
         </Link>{" "}
         / <span className="capitalize text-gray-800">{categoryName}</span>
       </div>
-
       <h2 className="text-3xl font-bold text-gray-800 mb-4 capitalize">
         {categoryName?.replace(/-/g, " ")}{" "}
         {isJobCategory ? "Listings" : "Products"}
       </h2>
-
       {loading ? (
         <p className="text-gray-500">Loading...</p>
       ) : products.length === 0 ? (
