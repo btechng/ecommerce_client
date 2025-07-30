@@ -21,6 +21,8 @@ import Footer from "./components/Footer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PostJob from "./pages/PostJob";
+import CVBuilder from "./pages/CVBuilder";
+import CategoryPageProductOnly from "./pages/CategoryPageProductOnly";
 
 const App = () => {
   return (
@@ -49,6 +51,10 @@ const App = () => {
         />
         <Route path="/category/:categoryName" element={<CategoryPage />} />
         <Route path="/product/:id" element={<ProductDetails />} />
+        <Route
+          path="/category/products"
+          element={<CategoryPageProductOnly />}
+        />
         <Route path="/admin/edit/:id" element={<ProductEdit />} />
         <Route path="/add-product" element={<PublicAddProduct />} />
 
@@ -59,6 +65,7 @@ const App = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/post-job" element={<PostJob />} />
+        <Route path="/cv-builder" element={<CVBuilder />} />
       </Routes>
 
       {/* ✅ Always-visible footer */}

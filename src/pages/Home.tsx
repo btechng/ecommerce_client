@@ -96,6 +96,18 @@ export default function Home() {
             >
               📢 Post a Job
             </Link>
+            <Link
+              to="/build-cv"
+              className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 w-full sm:w-auto"
+            >
+              📄 Build Your CV
+            </Link>
+            <Link
+              to="/category/products"
+              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 w-full sm:w-auto"
+            >
+              🛍️ See Products For Sale
+            </Link>
           </div>
 
           <div className="mt-6">
@@ -103,7 +115,7 @@ export default function Home() {
               to="/category/jobvacancy"
               className="bg-yellow-500 text-black font-semibold px-6 py-3 rounded-lg block max-w-xl mx-auto hover:bg-yellow-600 transition"
             >
-              🔎 Check Out Recent Jobs And Vacancies
+              🔎 Recent Jobs And Vacancies
             </Link>
           </div>
         </div>
