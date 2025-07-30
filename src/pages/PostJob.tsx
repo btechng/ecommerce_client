@@ -1,3 +1,4 @@
+// src/pages/PostJob.tsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +16,7 @@ export default function PostJob() {
 
   useEffect(() => {
     if (!token) {
-      toast.warning("SignUp/Register To Post Job");
+      toast.warning("Sign up or log in to post a job");
       navigate("/register");
     }
   }, [token, navigate]);
@@ -37,7 +38,7 @@ export default function PostJob() {
           description: duties,
           price: 0,
           imageUrl: "https://via.placeholder.com/300",
-          category: "jobvacancy", // ⬅️ consistent lowercase category
+          category: "Job/Vacancy", // ✅ consistent category name
           location,
           phoneNumber: email,
         },

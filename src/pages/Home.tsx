@@ -29,11 +29,11 @@ export default function Home() {
       .get("https://ecommerce-server-or19.onrender.com/api/products")
       .then((res) => {
         const data: Product[] = res.data.reverse();
-        const jobItems = data.filter((p) =>
-          p.category.toLowerCase().includes("job/vacancy")
+        const jobItems = data.filter(
+          (p) => p.category.toLowerCase() === "job/vacancy"
         );
         const productItems = data.filter(
-          (p) => !p.category.toLowerCase().includes("job/vacancy")
+          (p) => p.category.toLowerCase() !== "job/vacancy"
         );
         setJobs(jobItems);
         setProducts(productItems);
