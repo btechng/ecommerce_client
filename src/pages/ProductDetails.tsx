@@ -16,9 +16,8 @@ interface Product {
   price: number;
   imageUrl?: string;
   category?: string;
-  stock?: number;
   location?: string;
-  phoneNumber?: string;
+  email?: string;
   rating?: number;
   numReviews?: number;
   reviews?: Review[];
@@ -111,40 +110,44 @@ export default function ProductDetails() {
           )}
 
           {product.location && (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-2">
               📍 <strong>Location:</strong> {product.location}
             </p>
           )}
 
-          {!isJobVacancy && product.phoneNumber && (
+          {isJobVacancy && product.email && (
             <>
-              <p className="text-sm text-gray-600">
-                📞 <strong>Phone:</strong> {product.phoneNumber}
+              <p className="text-sm text-gray-600 mt-2">
+                📧 <strong>Email:</strong>{" "}
+                <a
+                  href={`mailto:${
+                    product.email
+                  }?subject=Application for ${encodeURIComponent(
+                    product.name
+                  )}&body=Hello,%0D%0A%0D%0AI am interested in the ${
+                    product.name
+                  } role. Please find my CV attached.%0D%0A%0D%0ARegards,%0D%0A[Your Name]`}
+                  className="text-blue-600 underline"
+                >
+                  {product.email}
+                </a>
               </p>
 
-              <div className="flex flex-wrap items-center gap-2 mt-4">
-                <a
-                  href={`tel:${product.phoneNumber}`}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                >
-                  Call Seller
-                </a>
-
-                <a
-                  href={`https://wa.me/${product.phoneNumber.replace(
-                    /\D/g,
-                    ""
-                  )}?text=${encodeURIComponent(
-                    `Hello, I'm interested in your product: ${product.name}`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
-                >
-                  Message on WhatsApp
-                </a>
-              </div>
+              <a
+                href={`mailto:${
+                  product.email
+                }?subject=Application for ${encodeURIComponent(product.name)}`}
+                className="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              >
+                ✉️ Apply via Email
+              </a>
             </>
+          )}
+
+          {!isJobVacancy && product.email && (
+            <p className="text-sm text-gray-600">
+              📧 <strong>Contact:</strong> {product.email}
+            </p>
           )}
         </div>
       </div>

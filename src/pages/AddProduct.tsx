@@ -11,7 +11,7 @@ export default function AddProduct() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -32,7 +32,6 @@ export default function AddProduct() {
           : [...existing, "Job/Vacancy"];
         setCategories(updatedCategories);
 
-        // Auto-select Job/Vacancy if ?type=job is in the URL
         const typeParam = searchParams.get("type");
         if (typeParam === "job") {
           setCategory("Job/Vacancy");
@@ -62,8 +61,14 @@ export default function AddProduct() {
   };
 
   const handleAdd = async () => {
-    if (!name || !category || !description || !location || !phoneNumber) {
-      alert("Please fill all fields");
+    if (
+      !name ||
+      !category ||
+      !description ||
+      !location ||
+      (category === "Job/Vacancy" && !email)
+    ) {
+      alert("Please fill all required fields");
       return;
     }
 
@@ -85,7 +90,7 @@ export default function AddProduct() {
           category,
           imageUrl,
           location,
-          phoneNumber,
+          email,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -152,14 +157,15 @@ export default function AddProduct() {
         onChange={(e) => setLocation(e.target.value)}
       />
 
-      <input
-        className="w-full border p-2 mb-3"
-        placeholder="Phone Number or Contact"
-        value={phoneNumber}
-        onChange={(e) => setPhoneNumber(e.target.value)}
-      />
-
-      {category !== "Job/Vacancy" && (
+      {category === "Job/Vacancy" ? (
+        <input
+          className="w-full border p-2 mb-3"
+          placeholder="Contact Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      ) : (
         <input
           className="w-full border p-2 mb-3"
           type="file"

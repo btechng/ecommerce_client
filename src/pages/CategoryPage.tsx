@@ -10,10 +10,11 @@ interface Product {
   imageUrl?: string;
   category: string;
   location?: string;
+  createdAt?: string;
 }
 
 export default function CategoryPage() {
-  const { categoryName } = useParams(); // slug like "jobvacancy"
+  const { categoryName } = useParams(); // e.g., "jobvacancy"
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +32,20 @@ export default function CategoryPage() {
       .get(
         `https://ecommerce-server-or19.onrender.com/api/products/category/${categoryName}`
       )
-      .then((res) => setProducts(res.data))
+      .then((res) => {
+        let fetched = res.data;
+
+        // Sort job posts by createdAt (newest first)
+        if (isJobCategory) {
+          fetched = fetched.sort(
+            (a: Product, b: Product) =>
+              new Date(b.createdAt || "").getTime() -
+              new Date(a.createdAt || "").getTime()
+          );
+        }
+
+        setProducts(fetched);
+      })
       .catch(() => alert("Failed to load products"))
       .finally(() => setLoading(false));
   }, [categoryName]);
@@ -57,37 +71,46 @@ export default function CategoryPage() {
         <p className="text-gray-600">No products found in this category.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <Link
-              to={`/product/${product._id}`}
-              key={product._id}
-              className="border rounded-lg shadow-sm hover:shadow-md transition bg-white"
-            >
-              <img
-                src={product.imageUrl || "https://via.placeholder.com/300"}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-t-lg"
-              />
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800 truncate">
-                  {product.name}
-                </h3>
-                <p className="text-sm text-gray-500 mb-2 line-clamp-2">
-                  {product.description}
-                </p>
-                {product.location && (
-                  <p className="text-sm text-gray-600 mb-1">
-                    📍 {product.location}
-                  </p>
+          {products.map((product) => {
+            const isJobItem = product.category
+              ?.toLowerCase()
+              .replace(/\s+/g, "")
+              .includes("job");
+
+            return (
+              <Link
+                to={`/product/${product._id}`}
+                key={product._id}
+                className="border rounded-lg shadow-sm hover:shadow-md transition bg-white"
+              >
+                {!isJobItem && (
+                  <img
+                    src={product.imageUrl || "https://via.placeholder.com/300"}
+                    alt={product.name}
+                    className="w-full h-48 object-cover rounded-t-lg"
+                  />
                 )}
-                {!isJobCategory && (
-                  <p className="text-indigo-600 font-bold">
-                    ₦{product.price?.toLocaleString() || "Contact"}
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 truncate">
+                    {product.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                    {product.description}
                   </p>
-                )}
-              </div>
-            </Link>
-          ))}
+                  {product.location && (
+                    <p className="text-sm text-gray-600 mb-1">
+                      📍 {product.location}
+                    </p>
+                  )}
+                  {!isJobItem && (
+                    <p className="text-indigo-600 font-bold">
+                      ₦{product.price?.toLocaleString() || "Contact"}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
