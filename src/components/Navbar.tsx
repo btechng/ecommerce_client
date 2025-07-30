@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Monitor, Shirt, Home, ShoppingCart } from "lucide-react";
+import {
+  Menu,
+  X,
+  Monitor,
+  Shirt,
+  Home,
+  ShoppingCart,
+  User,
+  LogOut,
+  LayoutDashboard,
+} from "lucide-react";
 import axios from "axios";
 import { motion } from "framer-motion";
 
-// ✅ Slugify matches backend (slugify(..., { lower: true, strict: true }))
 const slugify = (text: string) =>
   text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "") // remove special characters
+    .replace(/[^\w\s-]/g, "")
     .trim()
-    .replace(/\s+/g, "-"); // replace spaces with dashes
+    .replace(/\s+/g, "-");
 
 const categoryIcons: Record<string, JSX.Element> = {
   electronics: <Monitor className="w-4 h-4 inline mr-1" />,
@@ -24,6 +33,8 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCategories, setShowCategories] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [username, setUsername] = useState("");
+  const [avatarOpen, setAvatarOpen] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,6 +52,9 @@ const Navbar = () => {
 
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     setCartCount(cart.length);
+
+    const storedName = localStorage.getItem("username");
+    if (storedName) setUsername(storedName);
   }, [location]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -52,8 +66,7 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
+    localStorage.clear();
     alert("Logged out successfully.");
     navigate("/login");
   };
@@ -78,7 +91,7 @@ const Navbar = () => {
           />
         </Link>
 
-        {/* ✅ Desktop Navigation */}
+        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
           <Link
             to="/"
@@ -155,26 +168,53 @@ const Navbar = () => {
               </Link>
             </>
           ) : (
-            <>
-              {isAdmin && (
-                <Link to="/admin" className="text-white hover:text-indigo-400">
-                  Admin
-                </Link>
-              )}
-              <Link to="/profile" className="text-white hover:text-indigo-400">
-                👤 Profile
-              </Link>
+            <div className="relative">
               <button
-                onClick={handleLogout}
-                className="text-red-400 hover:text-red-600"
+                onClick={() => setAvatarOpen(!avatarOpen)}
+                className="flex items-center text-white space-x-2 focus:outline-none"
               >
-                Logout
+                <img
+                  src={`https://ui-avatars.com/api/?name=${username}&background=4f46e5&color=fff&rounded=true`}
+                  alt="avatar"
+                  className="w-8 h-8 rounded-full"
+                />
+                <span className="hidden lg:inline-block">Hi, {username}</span>
               </button>
-            </>
+
+              {avatarOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                  <Link
+                    to="/profile"
+                    onClick={() => setAvatarOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100"
+                  >
+                    <User className="inline mr-1 w-4 h-4" /> Profile
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setAvatarOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100"
+                    >
+                      <LayoutDashboard className="inline mr-1 w-4 h-4" /> Admin
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => {
+                      setAvatarOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100"
+                  >
+                    <LogOut className="inline mr-1 w-4 h-4" /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* ✅ Mobile Menu Button */}
+        {/* Mobile Menu Button */}
         <button
           className="md:hidden text-white"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -183,7 +223,7 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* ✅ Mobile Dropdown */}
+      {/* Mobile Dropdown */}
       {menuOpen && (
         <div className="md:hidden bg-white/90 px-4 pb-4 flex flex-col space-y-3 text-black">
           <form
@@ -238,14 +278,15 @@ const Navbar = () => {
             </>
           ) : (
             <>
+              <span className="text-gray-700">Hi, {username}</span>
+              <Link to="/profile" onClick={() => setMenuOpen(false)}>
+                Profile
+              </Link>
               {isAdmin && (
                 <Link to="/admin" onClick={() => setMenuOpen(false)}>
                   Admin
                 </Link>
               )}
-              <Link to="/profile" className="text-white hover:text-indigo-400">
-                👤 Profile
-              </Link>
               <button
                 onClick={() => {
                   setMenuOpen(false);

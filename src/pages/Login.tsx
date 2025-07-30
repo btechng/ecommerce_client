@@ -18,7 +18,8 @@ const Login = () => {
       );
 
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.role); // ✅ Save role
+      localStorage.setItem("role", res.data.role);
+      localStorage.setItem("username", res.data.name); // ✅ Store user name for profile
       alert("Login successful!");
 
       if (res.data.role === "admin") {
@@ -27,7 +28,11 @@ const Login = () => {
         navigate("/");
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || "Login failed");
+      alert(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Login failed"
+      );
     }
   };
 

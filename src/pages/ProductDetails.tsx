@@ -1,3 +1,4 @@
+// src/pages/ProductDetails.tsx
 import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
@@ -47,14 +48,23 @@ export default function ProductDetails() {
         setProduct(res.data);
         setLoading(false);
 
-        // 🔥 Track recently viewed
         const viewed = JSON.parse(
           localStorage.getItem("recentlyViewed") || "[]"
         );
+
+        const newItem = {
+          _id: res.data._id,
+          name: res.data.name,
+          description: res.data.description,
+          imageUrl: res.data.imageUrl,
+          category: res.data.category,
+        };
+
         const updated = [
-          res.data,
-          ...viewed.filter((p: Product) => p._id !== res.data._id),
+          newItem,
+          ...viewed.filter((item: Product) => item._id !== res.data._id),
         ];
+
         localStorage.setItem(
           "recentlyViewed",
           JSON.stringify(updated.slice(0, 10))
