@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -11,6 +11,14 @@ export default function PostJob() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!token) {
+      toast.warning("SignUp/Register To Post Job");
+      navigate("/register");
+    }
+  }, [token, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +30,6 @@ export default function PostJob() {
 
     try {
       setLoading(true);
-
       await axios.post(
         "https://ecommerce-server-or19.onrender.com/api/products",
         {
@@ -30,17 +37,16 @@ export default function PostJob() {
           description: duties,
           price: 0,
           imageUrl: "https://via.placeholder.com/300",
-          category: "Job/Vacancy",
+          category: "jobvacancy", // ⬅️ consistent lowercase category
           location,
-          phoneNumber: email, // 👈 mapped to phoneNumber field in DB
+          phoneNumber: email,
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-
       toast.success("Job posted successfully!");
       navigate("/");
     } catch (err: any) {

@@ -169,6 +169,19 @@ const Navbar = () => {
             </div>
           </div>
 
+          {token && (
+            <Link
+              to="/post-job"
+              className={`hover:text-indigo-500 ${
+                isActive("/post-job")
+                  ? "text-indigo-600 font-semibold"
+                  : "text-white"
+              }`}
+            >
+              Post Job
+            </Link>
+          )}
+
           {!token ? (
             <>
               <Link to="/login" className="text-white hover:text-indigo-400">
