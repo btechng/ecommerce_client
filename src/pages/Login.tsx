@@ -11,22 +11,29 @@ const Login = () => {
     try {
       const res = await axios.post(
         "https://ecommerce-server-or19.onrender.com/api/auth/login",
-        {
-          email,
-          password,
-        }
+        { email, password }
       );
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.role);
-      localStorage.setItem("username", res.data.name); // ✅ Store user name for profile
-      alert("Login successful!");
+      const { token, role, name } = res.data;
 
-      if (res.data.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/");
-      }
+      // Save token and user info
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+      localStorage.setItem("username", name);
+
+      // Fetch and sync backend cart
+      const cartRes = await axios.get(
+        "https://ecommerce-server-or19.onrender.com/api/cart",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const syncedCart = cartRes.data.map((item: any) => ({
+        ...item.product,
+        quantity: item.quantity,
+      }));
+      localStorage.setItem("cart", JSON.stringify(syncedCart));
+
+      alert("Login successful!");
+      navigate(role === "admin" ? "/admin" : "/");
     } catch (err: any) {
       alert(
         err.response?.data?.message ||

@@ -12,7 +12,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const slugify = (text: string) =>
   text
@@ -91,7 +91,12 @@ const Navbar = () => {
           />
         </Link>
 
-        {/* Desktop Navigation */}
+        {token && (
+          <span className="md:hidden text-white text-sm font-medium mr-4">
+            Hi, {username}
+          </span>
+        )}
+
         <div className="hidden md:flex items-center space-x-6">
           <Link
             to="/"
@@ -122,8 +127,7 @@ const Navbar = () => {
                     className="block px-4 py-2 text-gray-700 hover:bg-indigo-100 capitalize"
                     onClick={() => setShowCategories(false)}
                   >
-                    {categoryIcons[cat.toLowerCase()] || null}
-                    {cat}
+                    {categoryIcons[cat.toLowerCase()] || null} {cat}
                   </Link>
                 ))}
               </div>
@@ -139,24 +143,31 @@ const Navbar = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search..."
-              className="px-2 py-1 text-sm outline-none"
+              className="px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-400 rounded"
             />
-            <button type="submit" className="bg-indigo-600 text-white px-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              className="bg-indigo-600 text-white px-3"
+            >
               Go
-            </button>
+            </motion.button>
           </form>
 
-          <Link
-            to="/cart"
-            className="relative text-white hover:text-indigo-400"
-          >
-            <ShoppingCart className="w-5 h-5" />
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
-          </Link>
+          <div className="relative group">
+            <Link to="/cart" className="text-white hover:text-indigo-400">
+              <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 bg-black text-white text-xs px-2 py-1 rounded transition-all">
+              View Cart
+            </div>
+          </div>
 
           {!token ? (
             <>
@@ -181,40 +192,48 @@ const Navbar = () => {
                 <span className="hidden lg:inline-block">Hi, {username}</span>
               </button>
 
-              {avatarOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                  <Link
-                    to="/profile"
-                    onClick={() => setAvatarOpen(false)}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100"
+              <AnimatePresence>
+                {avatarOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 origin-top-right"
                   >
-                    <User className="inline mr-1 w-4 h-4" /> Profile
-                  </Link>
-                  {isAdmin && (
                     <Link
-                      to="/admin"
+                      to="/profile"
                       onClick={() => setAvatarOpen(false)}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100"
                     >
-                      <LayoutDashboard className="inline mr-1 w-4 h-4" /> Admin
+                      <User className="inline mr-1 w-4 h-4" /> Profile
                     </Link>
-                  )}
-                  <button
-                    onClick={() => {
-                      setAvatarOpen(false);
-                      handleLogout();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100"
-                  >
-                    <LogOut className="inline mr-1 w-4 h-4" /> Logout
-                  </button>
-                </div>
-              )}
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setAvatarOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-100"
+                      >
+                        <LayoutDashboard className="inline mr-1 w-4 h-4" />{" "}
+                        Admin
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        setAvatarOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100"
+                    >
+                      <LogOut className="inline mr-1 w-4 h-4" /> Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           className="md:hidden text-white"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -222,83 +241,6 @@ const Navbar = () => {
           {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
-
-      {/* Mobile Dropdown */}
-      {menuOpen && (
-        <div className="md:hidden bg-white/90 px-4 pb-4 flex flex-col space-y-3 text-black">
-          <form
-            onSubmit={handleSearch}
-            className="flex border rounded overflow-hidden"
-          >
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search..."
-              className="px-2 py-1 text-sm w-full outline-none"
-            />
-            <button type="submit" className="bg-indigo-600 text-white px-3">
-              Go
-            </button>
-          </form>
-
-          <Link to="/" onClick={() => setMenuOpen(false)}>
-            Home
-          </Link>
-
-          <div className="pl-2">
-            <span className="text-gray-700 font-medium">Categories</span>
-            <div className="ml-2 flex flex-col space-y-1">
-              {categories.map((cat) => (
-                <Link
-                  key={cat}
-                  to={`/category/${slugify(cat)}`}
-                  onClick={() => setMenuOpen(false)}
-                  className="capitalize"
-                >
-                  {categoryIcons[cat.toLowerCase()] || null}
-                  {cat}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <Link to="/cart" onClick={() => setMenuOpen(false)}>
-            Cart {cartCount > 0 && <span>({cartCount})</span>}
-          </Link>
-
-          {!token ? (
-            <>
-              <Link to="/login" onClick={() => setMenuOpen(false)}>
-                Login
-              </Link>
-              <Link to="/register" onClick={() => setMenuOpen(false)}>
-                Register
-              </Link>
-            </>
-          ) : (
-            <>
-              <span className="text-gray-700">Hi, {username}</span>
-              <Link to="/profile" onClick={() => setMenuOpen(false)}>
-                Profile
-              </Link>
-              {isAdmin && (
-                <Link to="/admin" onClick={() => setMenuOpen(false)}>
-                  Admin
-                </Link>
-              )}
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  handleLogout();
-                }}
-              >
-                Logout
-              </button>
-            </>
-          )}
-        </div>
-      )}
     </nav>
   );
 };

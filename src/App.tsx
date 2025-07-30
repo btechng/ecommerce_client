@@ -24,6 +24,8 @@ import PostJob from "./pages/PostJob";
 import CVBuilder from "./pages/CVBuilder";
 import CategoryPageProductOnly from "./pages/CategoryPageProductOnly";
 import UserProfile from "./pages/UserProfile";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
 
 const App = () => {
   return (
@@ -59,6 +61,8 @@ const App = () => {
         <Route path="/admin/edit/:id" element={<ProductEdit />} />
         <Route path="/add-product" element={<PublicAddProduct />} />
         <Route path="/profile" element={<UserProfile />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
 
         {/* Static informational pages */}
         <Route path="/about-us" element={<AboutUs />} />

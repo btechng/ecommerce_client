@@ -1,6 +1,5 @@
-// src/pages/ProductDetails.tsx
 import React, { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 interface Review {
@@ -28,13 +27,13 @@ interface Product {
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState<number>(5);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
-
   const token = localStorage.getItem("token");
 
   const isJobVacancy =
@@ -51,7 +50,6 @@ export default function ProductDetails() {
         const viewed = JSON.parse(
           localStorage.getItem("recentlyViewed") || "[]"
         );
-
         const newItem = {
           _id: res.data._id,
           name: res.data.name,
@@ -124,6 +122,14 @@ Email: ${product.email}
     link.click();
   };
 
+  const handleAddToCart = () => {
+    if (!product) return;
+    const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const updatedCart = [...existingCart, product];
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    navigate("/cart");
+  };
+
   if (loading) return <div className="p-4 pt-24">Loading...</div>;
   if (!product) return <div className="p-4 pt-24">Product not found</div>;
 
@@ -193,7 +199,7 @@ Email: ${product.email}
                   {product.phoneNumber}
                 </a>
               </p>
-              <div className="flex gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-2">
                 <a
                   href={`tel:${product.phoneNumber}`}
                   className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
@@ -213,6 +219,12 @@ Email: ${product.email}
                 >
                   WhatsApp
                 </a>
+                <button
+                  onClick={handleAddToCart}
+                  className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 transition"
+                >
+                  🛒 Add to Cart
+                </button>
               </div>
             </div>
           )}
