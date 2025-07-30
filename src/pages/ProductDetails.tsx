@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface Review {
   user: string;
@@ -69,20 +71,20 @@ export default function ProductDetails() {
         );
       })
       .catch(() => {
-        alert("Failed to load product");
+        toast.error("❌ Failed to load product");
         setLoading(false);
       });
   }, [id]);
 
   const handleReviewSubmit = async () => {
-    if (!comment.trim()) return alert("Comment is required");
+    if (!comment.trim()) return toast.warn("⚠️ Comment is required");
     try {
       await axios.post(
         `https://ecommerce-server-or19.onrender.com/api/products/${id}/reviews`,
         { comment, rating },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Review submitted!");
+      toast.success("✅ Review submitted!");
       setComment("");
       setRating(5);
       const res = await axios.get(
@@ -90,7 +92,7 @@ export default function ProductDetails() {
       );
       setProduct(res.data);
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to submit review");
+      toast.error(err.response?.data?.error || "❌ Failed to submit review");
     }
   };
 
@@ -122,12 +124,43 @@ Email: ${product.email}
     link.click();
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
-    const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const updatedCart = [...existingCart, product];
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-    navigate("/cart");
+
+    const token = localStorage.getItem("token");
+
+    try {
+      if (token) {
+        await axios.post(
+          "https://ecommerce-server-or19.onrender.com/api/cart",
+          { productId: product._id, quantity: 1 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
+        const existing = existingCart.find(
+          (item: any) => item.product._id === product._id
+        );
+
+        let updatedCart;
+        if (existing) {
+          updatedCart = existingCart.map((item: any) =>
+            item.product._id === product._id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+        } else {
+          updatedCart = [...existingCart, { product, quantity: 1 }];
+        }
+
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
+      }
+
+      toast.success("✅ Added to cart!");
+      navigate("/cart");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "❌ Failed to add to cart");
+    }
   };
 
   if (loading) return <div className="p-4 pt-24">Loading...</div>;
