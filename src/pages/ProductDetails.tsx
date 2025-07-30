@@ -46,6 +46,19 @@ export default function ProductDetails() {
       .then((res) => {
         setProduct(res.data);
         setLoading(false);
+
+        // 🔥 Track recently viewed
+        const viewed = JSON.parse(
+          localStorage.getItem("recentlyViewed") || "[]"
+        );
+        const updated = [
+          res.data,
+          ...viewed.filter((p: Product) => p._id !== res.data._id),
+        ];
+        localStorage.setItem(
+          "recentlyViewed",
+          JSON.stringify(updated.slice(0, 10))
+        );
       })
       .catch(() => {
         alert("Failed to load product");
@@ -54,11 +67,7 @@ export default function ProductDetails() {
   }, [id]);
 
   const handleReviewSubmit = async () => {
-    if (!comment.trim()) {
-      alert("Comment is required");
-      return;
-    }
-
+    if (!comment.trim()) return alert("Comment is required");
     try {
       await axios.post(
         `https://ecommerce-server-or19.onrender.com/api/products/${id}/reviews`,
@@ -79,15 +88,13 @@ export default function ProductDetails() {
 
   const handlePrint = () => {
     if (printRef.current) {
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
-        printWindow.document.write(
-          "<html><head><title>Print Job</title></head><body>"
-        );
-        printWindow.document.write(printRef.current.innerHTML);
-        printWindow.document.write("</body></html>");
-        printWindow.document.close();
-        printWindow.print();
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.write("<html><head><title>Print</title></head><body>");
+        win.document.write(printRef.current.innerHTML);
+        win.document.write("</body></html>");
+        win.document.close();
+        win.print();
       }
     }
   };
@@ -95,18 +102,16 @@ export default function ProductDetails() {
   const handleDownload = () => {
     if (!product) return;
     const content = `
-      Job Title: ${product.name}
-      Location: ${product.location}
-      Description: ${product.description}
-      Email: ${product.email}
+Job Title: ${product.name}
+Location: ${product.location}
+Description: ${product.description}
+Email: ${product.email}
     `;
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([content], { type: "text/plain" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `${product.name}_JobDetails.txt`;
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
   };
 
   if (loading) return <div className="p-4 pt-24">Loading...</div>;
@@ -127,7 +132,6 @@ export default function ProductDetails() {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             {product.name}
           </h1>
-
           {!isJobVacancy && (
             <p className="text-xl text-indigo-600 font-semibold mb-2">
               ₦{product.price?.toLocaleString() || "Contact"}
@@ -179,10 +183,10 @@ export default function ProductDetails() {
                   {product.phoneNumber}
                 </a>
               </p>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
+              <div className="flex gap-2 mt-2">
                 <a
                   href={`tel:${product.phoneNumber}`}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
                 >
                   Call Seller
                 </a>
@@ -195,9 +199,9 @@ export default function ProductDetails() {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
                 >
-                  Message on WhatsApp
+                  WhatsApp
                 </a>
               </div>
             </div>
@@ -209,26 +213,25 @@ export default function ProductDetails() {
         <div className="mt-6 flex gap-4">
           <button
             onClick={handlePrint}
-            className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
+            className="bg-gray-700 text-white px-4 py-2 rounded"
           >
             🖨️ Print
           </button>
           <button
             onClick={handleDownload}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            className="bg-gray-500 text-white px-4 py-2 rounded"
           >
             📄 Download
           </button>
         </div>
       )}
 
-      {/* Reviews */}
       <div className="mt-10">
         <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
         {product.reviews && product.reviews.length > 0 ? (
           <div className="space-y-4">
-            {product.reviews.map((r, idx) => (
-              <div key={idx} className="border p-3 rounded shadow-sm">
+            {product.reviews.map((r, i) => (
+              <div key={i} className="border p-3 rounded shadow-sm">
                 <div className="font-bold text-gray-700">{r.user}</div>
                 <div className="text-yellow-500">⭐ {r.rating}</div>
                 <div className="text-sm text-gray-600">{r.comment}</div>
@@ -243,15 +246,14 @@ export default function ProductDetails() {
         )}
       </div>
 
-      {/* Review form */}
       {token && (
         <div className="mt-10 border-t pt-6">
           <h3 className="text-xl font-semibold mb-2">Leave a Review</h3>
           <textarea
             className="w-full border p-2 mb-2"
-            placeholder="Write your comment..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
+            placeholder="Write your comment..."
           />
           <select
             value={rating}

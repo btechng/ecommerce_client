@@ -23,6 +23,7 @@ import "react-toastify/dist/ReactToastify.css";
 import PostJob from "./pages/PostJob";
 import CVBuilder from "./pages/CVBuilder";
 import CategoryPageProductOnly from "./pages/CategoryPageProductOnly";
+import UserProfile from "./pages/UserProfile";
 
 const App = () => {
   return (
@@ -57,6 +58,7 @@ const App = () => {
         />
         <Route path="/admin/edit/:id" element={<ProductEdit />} />
         <Route path="/add-product" element={<PublicAddProduct />} />
+        <Route path="/profile" element={<UserProfile />} />
 
         {/* Static informational pages */}
         <Route path="/about-us" element={<AboutUs />} />
@@ -65,7 +67,7 @@ const App = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/post-job" element={<PostJob />} />
-        <Route path="/cv-builder" element={<CVBuilder />} />
+        <Route path="/build-cv" element={<CVBuilder />} />
       </Routes>
 
       {/* ✅ Always-visible footer */}

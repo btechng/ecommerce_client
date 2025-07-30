@@ -161,6 +161,9 @@ const Navbar = () => {
                   Admin
                 </Link>
               )}
+              <Link to="/profile" className="text-white hover:text-indigo-400">
+                👤 Profile
+              </Link>
               <button
                 onClick={handleLogout}
                 className="text-red-400 hover:text-red-600"
@@ -240,6 +243,9 @@ const Navbar = () => {
                   Admin
                 </Link>
               )}
+              <Link to="/profile" className="text-white hover:text-indigo-400">
+                👤 Profile
+              </Link>
               <button
                 onClick={() => {
                   setMenuOpen(false);
