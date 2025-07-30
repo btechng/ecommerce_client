@@ -16,7 +16,9 @@ interface Product {
   price: number;
   imageUrl?: string;
   category?: string;
+  stock?: number;
   location?: string;
+  phoneNumber?: string;
   email?: string;
   rating?: number;
   numReviews?: number;
@@ -84,11 +86,13 @@ export default function ProductDetails() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="grid md:grid-cols-2 gap-6">
-        <img
-          src={product.imageUrl || "https://via.placeholder.com/400"}
-          alt={product.name}
-          className="w-full h-auto rounded shadow"
-        />
+        {!isJobVacancy && (
+          <img
+            src={product.imageUrl || "https://via.placeholder.com/400"}
+            alt={product.name}
+            className="w-full h-auto rounded shadow"
+          />
+        )}
 
         <div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -110,44 +114,52 @@ export default function ProductDetails() {
           )}
 
           {product.location && (
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-gray-600">
               📍 <strong>Location:</strong> {product.location}
             </p>
           )}
 
           {isJobVacancy && product.email && (
-            <>
-              <p className="text-sm text-gray-600 mt-2">
-                📧 <strong>Email:</strong>{" "}
-                <a
-                  href={`mailto:${
-                    product.email
-                  }?subject=Application for ${encodeURIComponent(
-                    product.name
-                  )}&body=Hello,%0D%0A%0D%0AI am interested in the ${
-                    product.name
-                  } role. Please find my CV attached.%0D%0A%0D%0ARegards,%0D%0A[Your Name]`}
-                  className="text-blue-600 underline"
-                >
-                  {product.email}
-                </a>
+            <div className="mt-4">
+              <p className="text-sm text-gray-600">
+                ✉️ <strong>Email:</strong> {product.email}
               </p>
-
               <a
-                href={`mailto:${
-                  product.email
-                }?subject=Application for ${encodeURIComponent(product.name)}`}
-                className="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                href={`mailto:${product.email}?subject=Job Application: ${product.name}`}
+                className="mt-2 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
               >
-                ✉️ Apply via Email
+                Apply via Email
               </a>
-            </>
+            </div>
           )}
 
-          {!isJobVacancy && product.email && (
-            <p className="text-sm text-gray-600">
-              📧 <strong>Contact:</strong> {product.email}
-            </p>
+          {!isJobVacancy && product.phoneNumber && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-600">
+                📞 <strong>Phone:</strong> {product.phoneNumber}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <a
+                  href={`tel:${product.phoneNumber}`}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                >
+                  Call Seller
+                </a>
+                <a
+                  href={`https://wa.me/${product.phoneNumber.replace(
+                    /\D/g,
+                    ""
+                  )}?text=${encodeURIComponent(
+                    `Hello, I'm interested in your product: ${product.name}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                >
+                  Message on WhatsApp
+                </a>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -155,7 +167,6 @@ export default function ProductDetails() {
       {/* Reviews */}
       <div className="mt-10">
         <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-
         {product.reviews && product.reviews.length > 0 ? (
           <div className="space-y-4">
             {product.reviews.map((r, idx) => (
@@ -184,7 +195,6 @@ export default function ProductDetails() {
             value={comment}
             onChange={(e) => setComment(e.target.value)}
           />
-
           <select
             value={rating}
             onChange={(e) => setRating(Number(e.target.value))}
@@ -196,7 +206,6 @@ export default function ProductDetails() {
               </option>
             ))}
           </select>
-
           <button
             onClick={handleReviewSubmit}
             className="bg-indigo-600 text-white px-4 py-2 rounded"

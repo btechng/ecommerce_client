@@ -11,7 +11,7 @@ export default function AddProduct() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
-  const [email, setEmail] = useState("");
+  const [contact, setContact] = useState(""); // email or phone
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -19,6 +19,8 @@ export default function AddProduct() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+
+  const isJobCategory = category.toLowerCase().includes("job");
 
   useEffect(() => {
     axios
@@ -61,42 +63,36 @@ export default function AddProduct() {
   };
 
   const handleAdd = async () => {
-    if (
-      !name ||
-      !category ||
-      !description ||
-      !location ||
-      (category === "Job/Vacancy" && !email)
-    ) {
-      alert("Please fill all required fields");
+    if (!name || !category || !description || !location || !contact) {
+      alert("Please fill all fields");
       return;
     }
 
-    if (category !== "Job/Vacancy" && !price) {
+    if (!isJobCategory && !price) {
       alert("Please enter a price");
       return;
     }
 
-    const imageUrl =
-      category !== "Job/Vacancy" ? await handleUploadImage() : "";
+    const imageUrl = !isJobCategory ? await handleUploadImage() : "";
 
     try {
       await axios.post(
         "https://ecommerce-server-or19.onrender.com/api/products",
         {
           name,
-          price: category !== "Job/Vacancy" ? parseFloat(price) : 0,
+          price: !isJobCategory ? parseFloat(price) : 0,
           description,
           category,
           imageUrl,
           location,
-          email,
+          phoneNumber: !isJobCategory ? contact : undefined,
+          email: isJobCategory ? contact : undefined,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      alert(category === "Job/Vacancy" ? "Job posted!" : "Product added!");
+      alert(isJobCategory ? "Job posted!" : "Product added!");
       navigate("/admin");
     } catch (err: any) {
       alert(err.response?.data?.error || "Failed to submit");
@@ -106,7 +102,7 @@ export default function AddProduct() {
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 border rounded shadow">
       <h2 className="text-2xl font-bold mb-4">
-        {category === "Job/Vacancy" ? "Post Job/Vacancy" : "Add New Product"}
+        {isJobCategory ? "Post Job/Vacancy" : "Add New Product"}
       </h2>
 
       <input
@@ -116,7 +112,7 @@ export default function AddProduct() {
         onChange={(e) => setName(e.target.value)}
       />
 
-      {category !== "Job/Vacancy" && (
+      {!isJobCategory && (
         <input
           className="w-full border p-2 mb-3"
           type="number"
@@ -129,9 +125,7 @@ export default function AddProduct() {
       <textarea
         className="w-full border p-2 mb-3"
         placeholder={
-          category === "Job/Vacancy"
-            ? "Duties / Responsibilities"
-            : "Product Description"
+          isJobCategory ? "Duties / Responsibilities" : "Product Description"
         }
         value={description}
         onChange={(e) => setDescription(e.target.value)}
@@ -157,15 +151,15 @@ export default function AddProduct() {
         onChange={(e) => setLocation(e.target.value)}
       />
 
-      {category === "Job/Vacancy" ? (
-        <input
-          className="w-full border p-2 mb-3"
-          placeholder="Contact Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      ) : (
+      <input
+        className="w-full border p-2 mb-3"
+        type={isJobCategory ? "email" : "tel"}
+        placeholder={isJobCategory ? "Contact Email" : "Contact Phone Number"}
+        value={contact}
+        onChange={(e) => setContact(e.target.value)}
+      />
+
+      {!isJobCategory && (
         <input
           className="w-full border p-2 mb-3"
           type="file"
@@ -181,7 +175,7 @@ export default function AddProduct() {
       >
         {uploading
           ? "Uploading..."
-          : category === "Job/Vacancy"
+          : isJobCategory
           ? "Post Job"
           : "Add Product"}
       </button>
