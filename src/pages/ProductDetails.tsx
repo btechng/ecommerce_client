@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
@@ -31,8 +31,14 @@ export default function ProductDetails() {
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState<number>(5);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const token = localStorage.getItem("token");
+
+  const isJobVacancy =
+    product?.category?.toLowerCase().replace(/\s+/g, "") === "job/vacancy" ||
+    product?.category?.toLowerCase().replace(/\s+/g, "") === "jobvacancy";
 
   useEffect(() => {
     axios
@@ -57,16 +63,11 @@ export default function ProductDetails() {
       await axios.post(
         `https://ecommerce-server-or19.onrender.com/api/products/${id}/reviews`,
         { comment, rating },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       alert("Review submitted!");
       setComment("");
       setRating(5);
-
       const res = await axios.get(
         `https://ecommerce-server-or19.onrender.com/api/products/${id}`
       );
@@ -76,16 +77,44 @@ export default function ProductDetails() {
     }
   };
 
-  if (loading) return <div className="p-4">Loading...</div>;
-  if (!product) return <div className="p-4">Product not found</div>;
+  const handlePrint = () => {
+    if (printRef.current) {
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(
+          "<html><head><title>Print Job</title></head><body>"
+        );
+        printWindow.document.write(printRef.current.innerHTML);
+        printWindow.document.write("</body></html>");
+        printWindow.document.close();
+        printWindow.print();
+      }
+    }
+  };
 
-  const isJobVacancy =
-    product.category?.toLowerCase().replace(/\s+/g, "") === "job/vacancy" ||
-    product.category?.toLowerCase().replace(/\s+/g, "") === "jobvacancy";
+  const handleDownload = () => {
+    if (!product) return;
+    const content = `
+      Job Title: ${product.name}
+      Location: ${product.location}
+      Description: ${product.description}
+      Email: ${product.email}
+    `;
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${product.name}_JobDetails.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  if (loading) return <div className="p-4 pt-24">Loading...</div>;
+  if (!product) return <div className="p-4 pt-24">Product not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="grid md:grid-cols-2 gap-6">
+    <div className="max-w-4xl mx-auto p-4 pt-24">
+      <div ref={printRef} className="grid md:grid-cols-2 gap-6">
         {!isJobVacancy && (
           <img
             src={product.imageUrl || "https://via.placeholder.com/400"}
@@ -105,16 +134,22 @@ export default function ProductDetails() {
             </p>
           )}
 
-          <p className="text-gray-600 mb-4">{product.description}</p>
-
-          {product.rating && (
-            <p className="text-yellow-600 mb-2">
-              ⭐ {product.rating.toFixed(1)} ({product.numReviews} reviews)
-            </p>
-          )}
+          <div className="text-gray-600 mb-4 whitespace-pre-line">
+            {expanded || !isJobVacancy
+              ? product.description
+              : `${product.description.slice(0, 150)}...`}
+            {isJobVacancy && product.description.length > 150 && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="text-blue-600 ml-2 underline"
+              >
+                {expanded ? "Show Less" : "Show More"}
+              </button>
+            )}
+          </div>
 
           {product.location && (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-2">
               📍 <strong>Location:</strong> {product.location}
             </p>
           )}
@@ -122,7 +157,10 @@ export default function ProductDetails() {
           {isJobVacancy && product.email && (
             <div className="mt-4">
               <p className="text-sm text-gray-600">
-                ✉️ <strong>Email:</strong> {product.email}
+                ✉️ <strong>Email:</strong>{" "}
+                <a href={`mailto:${product.email}`} className="underline">
+                  {product.email}
+                </a>
               </p>
               <a
                 href={`mailto:${product.email}?subject=Job Application: ${product.name}`}
@@ -136,7 +174,10 @@ export default function ProductDetails() {
           {!isJobVacancy && product.phoneNumber && (
             <div className="mt-4">
               <p className="text-sm text-gray-600">
-                📞 <strong>Phone:</strong> {product.phoneNumber}
+                📞 <strong>Phone:</strong>{" "}
+                <a href={`tel:${product.phoneNumber}`} className="underline">
+                  {product.phoneNumber}
+                </a>
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <a
@@ -163,6 +204,23 @@ export default function ProductDetails() {
           )}
         </div>
       </div>
+
+      {isJobVacancy && (
+        <div className="mt-6 flex gap-4">
+          <button
+            onClick={handlePrint}
+            className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
+          >
+            🖨️ Print
+          </button>
+          <button
+            onClick={handleDownload}
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+          >
+            📄 Download
+          </button>
+        </div>
+      )}
 
       {/* Reviews */}
       <div className="mt-10">
