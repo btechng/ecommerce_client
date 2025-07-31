@@ -11,29 +11,42 @@ const Login = () => {
     try {
       const res = await axios.post(
         "https://ecommerce-server-or19.onrender.com/api/auth/login",
-        {
-          email,
-          password,
-        }
+        { email, password }
       );
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.role); // ✅ Save role
-      alert("Login successful!");
+      const { token, user } = res.data;
 
-      if (res.data.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/");
-      }
+      // ✅ Save token and user info to localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("userId", user._id); // ✅ Needed for tracking
+      localStorage.setItem("username", user.name);
+      localStorage.setItem("role", user.role);
+
+      // ✅ Sync cart
+      const cartRes = await axios.get(
+        "https://ecommerce-server-or19.onrender.com/api/cart",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const syncedCart = cartRes.data.map((item: any) => ({
+        ...item.product,
+        quantity: item.quantity,
+      }));
+      localStorage.setItem("cart", JSON.stringify(syncedCart));
+
+      alert("Login successful!");
+      navigate(user.role === "admin" ? "/admin" : "/");
     } catch (err: any) {
-      alert(err.response?.data?.message || "Login failed");
+      alert(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Login failed"
+      );
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Login</h2>
+      <h2 className="text-xl font-bold mb-4">Login?</h2>
       <input
         className="w-full border p-2 mb-2"
         placeholder="Email"

@@ -28,6 +28,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 // ✅ Toast for alerts
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Leaderboard from "./pages/Leaderboard";
 
 const App = () => {
   return (
@@ -50,6 +51,7 @@ const App = () => {
         <Route path="/add-product" element={<PublicAddProduct />} />
         <Route path="/post-job" element={<PostJob />} />
         <Route path="/build-cv" element={<CVBuilder />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
 
         {/* Static Info Pages */}
         <Route path="/about-us" element={<AboutUs />} />
