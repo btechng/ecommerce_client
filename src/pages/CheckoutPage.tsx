@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { PaystackButton } from "react-paystack";
 
 interface Product {
   _id: string;
@@ -21,6 +22,7 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const email = localStorage.getItem("userEmail") || "user@example.com"; // Update this if user data is available
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -49,39 +51,60 @@ const CheckoutPage = () => {
     );
   };
 
-  const handleCheckout = async () => {
-    if (!address.trim() || !phone.trim()) {
-      return alert("Address and phone number are required");
-    }
+  const publicKey = "pk_live_755c52be93e9db58f39401f0ecb9d20df9e0cdbe"; // Replace with your real Paystack public key
+  const amount = calculateTotal() * 100; // Paystack expects amount in kobo
+  const reference = `ref-${Date.now()}`;
 
-    try {
-      const orderPayload = {
-        cart,
-        address,
-        phone,
-        totalAmount: calculateTotal(),
-      };
+  const paystackProps = {
+    email,
+    amount,
+    reference,
+    publicKey,
+    metadata: {
+      custom_fields: [
+        {
+          display_name: "Phone Number",
+          variable_name: "phone_number",
+          value: phone,
+        },
+        {
+          display_name: "Shipping Address",
+          variable_name: "shipping_address",
+          value: address,
+        },
+      ],
+    },
+    onSuccess: async (response: any) => {
+      try {
+        const orderPayload = {
+          cart,
+          address,
+          phone,
+          totalAmount: calculateTotal(),
+          paymentRef: response.reference,
+        };
 
-      await axios.post(
-        "https://ecommerce-server-or19.onrender.com/api/cart/checkout",
-        orderPayload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+        await axios.post(
+          "https://ecommerce-server-or19.onrender.com/api/cart/checkout",
+          orderPayload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      // Clear backend cart
-      await axios.delete(
-        "https://ecommerce-server-or19.onrender.com/api/cart/clear",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+        await axios.delete(
+          "https://ecommerce-server-or19.onrender.com/api/cart/clear",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      // Optionally clear local cart too
-      localStorage.removeItem("cart");
-
-      alert("✅ Order placed successfully!");
-      navigate("/my-orders"); // or navigate("/thank-you")
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Checkout failed");
-    }
+        localStorage.removeItem("cart");
+        alert("✅ Payment successful & order placed!");
+        navigate("/my-orders");
+      } catch (err: any) {
+        alert(err.response?.data?.error || "Order failed after payment");
+      }
+    },
+    onClose: () => {
+      alert("Payment dialog was closed");
+    },
   };
 
   if (loading) return <div className="p-4 pt-24">Loading cart...</div>;
@@ -136,12 +159,13 @@ const CheckoutPage = () => {
               Total: ₦{calculateTotal().toLocaleString()}
             </div>
 
-            <button
-              onClick={handleCheckout}
+            <PaystackButton
+              {...paystackProps}
               className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+              disabled={!address || !phone}
             >
-              ✅ Place Order
-            </button>
+              ✅ Pay Now
+            </PaystackButton>
           </div>
         </>
       )}

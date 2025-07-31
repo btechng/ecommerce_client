@@ -146,10 +146,11 @@ const CartPage = () => {
           <div className="text-right text-xl font-semibold">
             Total: ₦{total.toLocaleString()}
           </div>
-
-          <button className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
-            Proceed to Checkout
-          </button>
+          <a href="/checkout">
+            <button className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
+              Proceed to Checkout
+            </button>
+          </a>
         </div>
       )}
     </div>

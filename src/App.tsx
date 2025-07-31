@@ -1,44 +1,52 @@
-// src/App.tsx
 import React from "react";
 import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import PrivateRoute from "./components/PrivateRoute";
+
+// Public Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import AdminDashboard from "./pages/AdminDashboard";
-import AddProduct from "./pages/AddProduct";
-import Navbar from "./components/Navbar";
-import PrivateRoute from "./components/PrivateRoute";
 import CategoryPage from "./pages/CategoryPage";
+import CategoryPageProductOnly from "./pages/CategoryPageProductOnly";
 import ProductDetails from "./pages/ProductDetails";
-import ProductEdit from "./pages/ProductEdit";
 import PublicAddProduct from "./pages/PublicAddProduct";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Disclaimer from "./pages/Disclaimer";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
-import Footer from "./components/Footer";
 import PostJob from "./pages/PostJob";
 import CVBuilder from "./pages/CVBuilder";
-import CategoryPageProductOnly from "./pages/CategoryPageProductOnly";
+import Leaderboard from "./pages/Leaderboard";
+
+// User Pages
 import UserProfile from "./pages/UserProfile";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 
-// ✅ Toast for alerts
+// Admin Pages
+
+import AdminDashboard from "./pages/AdminDashboard";
+import AddProduct from "./pages/AddProduct";
+import ProductEdit from "./pages/ProductEdit";
+
+// Toast
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Leaderboard from "./pages/Leaderboard";
+import UserList from "./pages/UserList";
+import OrderList from "./pages/OrderList";
+import ProductList from "./pages/ProductList";
+import AdminLayout from "./pages/AdminLayout";
 
 const App = () => {
   return (
     <>
-      {/* Top Navigation Bar */}
       <Navbar />
 
-      {/* Page Routes */}
       <Routes>
-        {/* Public Pages */}
+        {/* 🔓 Public Pages */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -53,38 +61,14 @@ const App = () => {
         <Route path="/build-cv" element={<CVBuilder />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
 
-        {/* Static Info Pages */}
+        {/* 📄 Static Info */}
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/admin"
-          element={
-            <PrivateRoute>
-              <AdminDashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin/add-product"
-          element={
-            <PrivateRoute>
-              <AddProduct />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin/edit/:id"
-          element={
-            <PrivateRoute>
-              <ProductEdit />
-            </PrivateRoute>
-          }
-        />
+        {/* 🔒 User Protected Routes */}
         <Route
           path="/profile"
           element={
@@ -109,12 +93,26 @@ const App = () => {
             </PrivateRoute>
           }
         />
+
+        {/* 🔐 Admin Layout with Nested Protected Routes */}
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <AdminLayout />
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="products" element={<ProductList />} />
+          <Route path="add-product" element={<AddProduct />} />
+          <Route path="edit/:id" element={<ProductEdit />} />
+          <Route path="orders" element={<OrderList />} />
+          <Route path="users" element={<UserList />} />
+        </Route>
       </Routes>
 
-      {/* Always-visible Footer */}
       <Footer />
-
-      {/* Toast Alerts */}
       <ToastContainer position="top-center" autoClose={3000} />
     </>
   );
