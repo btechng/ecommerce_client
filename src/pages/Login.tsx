@@ -46,7 +46,7 @@ const Login = () => {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Login</h2>
+      <h2 className="text-xl font-bold mb-4">Login?</h2>
       <input
         className="w-full border p-2 mb-2"
         placeholder="Email"
