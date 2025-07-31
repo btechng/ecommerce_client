@@ -37,6 +37,7 @@ export default function ProductDetails() {
   const [expanded, setExpanded] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
 
   const isJobVacancy =
     product?.category?.toLowerCase().replace(/\s+/g, "") === "job/vacancy" ||
@@ -49,6 +50,7 @@ export default function ProductDetails() {
         setProduct(res.data);
         setLoading(false);
 
+        // LocalStorage Tracking
         const viewed = JSON.parse(
           localStorage.getItem("recentlyViewed") || "[]"
         );
@@ -59,16 +61,23 @@ export default function ProductDetails() {
           imageUrl: res.data.imageUrl,
           category: res.data.category,
         };
-
         const updated = [
           newItem,
           ...viewed.filter((item: Product) => item._id !== res.data._id),
         ];
-
         localStorage.setItem(
           "recentlyViewed",
           JSON.stringify(updated.slice(0, 10))
         );
+
+        // Server-side tracking
+        if (token && userId) {
+          axios.post(
+            `https://ecommerce-server-or19.onrender.com/api/users/${userId}/view-product`,
+            { productId: res.data._id },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
       })
       .catch(() => {
         toast.error("❌ Failed to load product");
@@ -126,8 +135,6 @@ Email: ${product.email}
 
   const handleAddToCart = async () => {
     if (!product) return;
-
-    const token = localStorage.getItem("token");
     if (!token) {
       toast.warning("⚠️ Please login to add to cart");
       navigate("/login");
