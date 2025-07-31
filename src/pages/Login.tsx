@@ -14,14 +14,15 @@ const Login = () => {
         { email, password }
       );
 
-      const { token, role, name } = res.data;
+      const { token, user } = res.data;
 
-      // Save token and user info
+      // ✅ Save token and user info to localStorage
       localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
-      localStorage.setItem("username", name);
+      localStorage.setItem("userId", user._id); // ✅ Needed for tracking
+      localStorage.setItem("username", user.name);
+      localStorage.setItem("role", user.role);
 
-      // Fetch and sync backend cart
+      // ✅ Sync cart
       const cartRes = await axios.get(
         "https://ecommerce-server-or19.onrender.com/api/cart",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -33,7 +34,7 @@ const Login = () => {
       localStorage.setItem("cart", JSON.stringify(syncedCart));
 
       alert("Login successful!");
-      navigate(role === "admin" ? "/admin" : "/");
+      navigate(user.role === "admin" ? "/admin" : "/");
     } catch (err: any) {
       alert(
         err.response?.data?.message ||
