@@ -13,7 +13,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const slugify = (text: string) =>
   text
@@ -73,9 +73,10 @@ const Navbar = () => {
 
   return (
     <>
-      {/* ✅ Top Navbar (Desktop + Mobile) */}
+      {/* ✅ Navbar */}
       <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-sm bg-white/10 border-b border-white/20">
         <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+          {/* ✅ Logo */}
           <Link to="/" className="flex items-center">
             <motion.img
               src="https://lh3.googleusercontent.com/d/1XhHYygaVSvHitgWS3DCqg2rFyFrPobA0"
@@ -88,7 +89,7 @@ const Navbar = () => {
             />
           </Link>
 
-          {/* ✅ Desktop Navigation */}
+          {/* ✅ Desktop Nav */}
           <div className="hidden md:flex items-center space-x-6 text-white">
             <Link
               to="/"
@@ -133,7 +134,6 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* ✅ Leaderboard Link */}
             <Link to="/leaderboard" className="hover:underline">
               🏆 Leaderboard
             </Link>
@@ -161,13 +161,9 @@ const Navbar = () => {
           {/* ✅ Mobile Toggle */}
           <button
             className="md:hidden text-white"
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => setMenuOpen(true)}
           >
-            {menuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
+            <Menu className="w-6 h-6" />
           </button>
         </div>
       </nav>
@@ -202,6 +198,129 @@ const Navbar = () => {
           Account
         </Link>
       </div>
+
+      {/* ✅ Mobile Sidebar Menu with Overlay */}
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMenuOpen(false)}
+            />
+            <motion.div
+              className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg p-4 space-y-4"
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ type: "tween", duration: 0.3 }}
+            >
+              <button
+                onClick={() => setMenuOpen(false)}
+                className="text-gray-700 mb-4"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <form
+                onSubmit={handleSearch}
+                className="flex border rounded overflow-hidden"
+              >
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search..."
+                  className="px-2 py-1 text-sm outline-none flex-1 text-black"
+                />
+                <button type="submit" className="bg-indigo-600 text-white px-3">
+                  <Search className="w-4 h-4" />
+                </button>
+              </form>
+
+              <Link
+                to="/"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                Home
+              </Link>
+
+              <button
+                onClick={() => {
+                  setShowCategories(true);
+                  setMenuOpen(false);
+                }}
+                className="block text-gray-800"
+              >
+                Categories ▾
+              </button>
+
+              <Link
+                to="/cart"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                Cart
+              </Link>
+
+              <Link
+                to="/leaderboard"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                🏆 Leaderboard
+              </Link>
+
+              {!token ? (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-gray-800"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-gray-800"
+                  >
+                    Register
+                  </Link>
+                </>
+              ) : (
+                <>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setMenuOpen(false)}
+                      className="block text-gray-800"
+                    >
+                      Admin
+                    </Link>
+                  )}
+                  <Link
+                    to="/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-gray-800"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="block text-gray-800"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ✅ Categories Modal */}
       {showCategories && (
