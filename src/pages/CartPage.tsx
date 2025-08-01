@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 interface Product {
   _id: string;
@@ -146,11 +147,14 @@ const CartPage = () => {
           <div className="text-right text-xl font-semibold">
             Total: ₦{total.toLocaleString()}
           </div>
-          <a href="/checkout">
-            <button className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
-              Proceed to Checkout
-            </button>
-          </a>
+
+          <div className="text-right">
+            <Link to="/checkout">
+              <button className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">
+                Proceed to Checkout
+              </button>
+            </Link>
+          </div>
         </div>
       )}
     </div>
