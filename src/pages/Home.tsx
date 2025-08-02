@@ -1,4 +1,3 @@
-// Home.tsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -106,7 +105,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-3xl mx-auto">
             <Link
-              to="/add-product"
+              to="/post-product"
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full sm:w-auto"
             >
               🛒 Sell Your Product
@@ -141,7 +140,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* JOBS FIRST */}
+        {/* JOBS SECTION */}
         <div className="p-4 max-w-6xl mx-auto">
           <h2 className="text-white text-xl font-semibold mb-2">
             🟡 Jobs & Vacancies
@@ -154,14 +153,25 @@ export default function Home() {
             className="w-full sm:w-80 border p-2 rounded mb-4 text-black"
           />
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-gray-300/40 animate-pulse h-36 rounded-xl"
-                ></div>
-              ))}
-            </div>
+            <>
+              <div className="flex justify-center mb-4">
+                <div className="bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 animate-pulse h-4 w-40 rounded" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-white/10 rounded-xl p-4 animate-pulse space-y-2"
+                  >
+                    <div className="h-4 bg-gray-300 rounded w-24"></div>
+                    <div className="h-5 bg-gray-300 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-300 rounded w-full"></div>
+                    <div className="h-3 bg-gray-300 rounded w-5/6"></div>
+                    <div className="h-3 bg-gray-300 rounded w-1/3 mt-2"></div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {filteredJobs.map((job) => (
@@ -189,7 +199,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* PRODUCTS AFTER JOBS */}
+        {/* PRODUCTS SECTION */}
         <div className="p-4 max-w-6xl mx-auto">
           <h2 className="text-white text-xl font-semibold mb-2">🛒 Products</h2>
           <input
@@ -200,14 +210,24 @@ export default function Home() {
             className="w-full sm:w-80 border p-2 rounded mb-4 text-black"
           />
           {loading ? (
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-gray-300/40 animate-pulse h-56 rounded-xl"
-                ></div>
-              ))}
-            </div>
+            <>
+              <div className="flex justify-center mb-4">
+                <div className="bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 animate-pulse h-4 w-40 rounded" />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-white/10 rounded-xl animate-pulse p-3"
+                  >
+                    <div className="bg-gray-300 rounded-lg h-32 mb-2 w-full" />
+                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-1" />
+                    <div className="h-3 bg-gray-300 rounded w-full mb-1" />
+                    <div className="h-3 bg-gray-300 rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
