@@ -30,11 +30,17 @@ const AdminDashboard = () => {
   const token = localStorage.getItem("token");
 
   const fetchProducts = async () => {
-    const res = await axios.get(
-      "https://ecommerce-server-or19.onrender.com/api/products?all=true",
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    setProducts(res.data);
+    try {
+      const res = await axios.get(
+        "https://ecommerce-server-or19.onrender.com/api/products/admin",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setProducts(res.data);
+    } catch {
+      console.error("Failed to load products");
+    }
   };
 
   const fetchUsers = async () => {
@@ -70,7 +76,7 @@ const AdminDashboard = () => {
       );
       setCategories((prev) => [res.data, ...prev]);
       setNewCategory("");
-    } catch (err) {
+    } catch {
       alert("Failed to add category");
     }
   };
