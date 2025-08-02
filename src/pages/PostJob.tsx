@@ -49,7 +49,7 @@ export default function PostJob() {
         }
       );
       toast.success("🎉 Job posted successfully!");
-      navigate("/jobs"); // ✅ redirect to jobs page
+      navigate("/category/jobvacancy"); // ✅ redirect to jobs page
     } catch (err: any) {
       toast.error(
         err?.response?.data?.error || "Failed to post job. Please try again."
