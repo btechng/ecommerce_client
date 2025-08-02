@@ -33,13 +33,11 @@ const AdminDashboard = () => {
     try {
       const res = await axios.get(
         "https://ecommerce-server-or19.onrender.com/api/products/admin",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setProducts(res.data);
     } catch {
-      console.error("Failed to load products");
+      alert("Failed to fetch products");
     }
   };
 
@@ -76,7 +74,7 @@ const AdminDashboard = () => {
       );
       setCategories((prev) => [res.data, ...prev]);
       setNewCategory("");
-    } catch {
+    } catch (err) {
       alert("Failed to add category");
     }
   };
@@ -95,7 +93,7 @@ const AdminDashboard = () => {
 
   const handleApprove = async (id: string) => {
     try {
-      const res = await axios.put(
+      await axios.put(
         `https://ecommerce-server-or19.onrender.com/api/products/approve/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
@@ -126,7 +124,6 @@ const AdminDashboard = () => {
       <h2 className="text-2xl font-bold mb-4 text-center">🛠 Admin Dashboard</h2>
 
       <div className="grid md:grid-cols-3 gap-4">
-        {/* ✅ Quick Actions */}
         <div className="bg-white p-4 rounded shadow">
           <h3 className="font-semibold mb-2">Quick Actions</h3>
           <Link
@@ -143,7 +140,6 @@ const AdminDashboard = () => {
           </Link>
         </div>
 
-        {/* ✅ Users Summary */}
         <div className="bg-white p-4 rounded shadow col-span-1 md:col-span-2">
           <h3 className="font-semibold mb-2">📋 Users</h3>
           <div className="overflow-x-auto">
@@ -170,7 +166,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* ✅ Add Category */}
+      {/* Add Category */}
       <div className="bg-white mt-6 p-4 rounded shadow max-w-md mx-auto">
         <h3 className="font-semibold mb-2">📂 Add New Category</h3>
         <div className="flex gap-2">
@@ -194,7 +190,7 @@ const AdminDashboard = () => {
         </ul>
       </div>
 
-      {/* ✅ Product Filter Tabs */}
+      {/* Tabs */}
       <div className="mt-6 mb-2 flex gap-4 justify-center">
         <button
           onClick={() => setFilter("all")}
@@ -214,10 +210,13 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      {/* ✅ Product List */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Product Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {filteredProducts.map((product) => (
-          <div key={product._id} className="bg-white p-4 rounded shadow">
+          <div
+            key={product._id}
+            className="bg-white p-4 rounded shadow w-full overflow-hidden"
+          >
             <h4 className="font-semibold">{product.name}</h4>
             <p className="text-sm text-gray-700 mb-2">
               ₦{product.price?.toLocaleString()}
