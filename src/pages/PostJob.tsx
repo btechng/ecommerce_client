@@ -1,4 +1,3 @@
-// src/pages/PostJob.tsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -16,8 +15,8 @@ export default function PostJob() {
 
   useEffect(() => {
     if (!token) {
-      toast.warning("Sign up or log in to post a job");
-      navigate("/register");
+      toast.warning("You must be logged in to post a job.");
+      navigate("/login");
     }
   }, [token, navigate]);
 
@@ -32,15 +31,16 @@ export default function PostJob() {
     try {
       setLoading(true);
       await axios.post(
-        "https://ecommerce-server-or19.onrender.com/api/products",
+        "https://ecommerce-server-or19.onrender.com/api/products/post",
         {
           name: title,
           description: duties,
           price: 0,
-          imageUrl: "https://via.placeholder.com/300",
-          category: "Job/Vacancy", // ✅ consistent category name
+          imageUrl: "https://via.placeholder.com/300", // Default image
+          category: "Job/Vacancy",
           location,
-          phoneNumber: email,
+          phoneNumber: "",
+          email,
         },
         {
           headers: {
@@ -48,8 +48,8 @@ export default function PostJob() {
           },
         }
       );
-      toast.success("Job posted successfully!");
-      navigate("/");
+      toast.success("🎉 Job posted successfully!");
+      navigate("/jobs"); // ✅ redirect to jobs page
     } catch (err: any) {
       toast.error(
         err?.response?.data?.error || "Failed to post job. Please try again."
@@ -61,9 +61,9 @@ export default function PostJob() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
-      <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md">
+      <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md mt-12">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          Post a Job / Vacancy
+          📢 Post a Job / Vacancy
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -95,7 +95,7 @@ export default function PostJob() {
 
           <div>
             <label className="block mb-1 text-gray-700 font-medium">
-              Duties / Description
+              Duties / Job Description
             </label>
             <textarea
               value={duties}
@@ -123,7 +123,7 @@ export default function PostJob() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
           >
-            {loading ? "Posting..." : "Post Job"}
+            {loading ? "Posting..." : "🚀 Post Job"}
           </button>
         </form>
       </div>
