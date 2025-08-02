@@ -6,6 +6,7 @@ interface Product {
   _id: string;
   name: string;
   price: number;
+  isApproved: boolean;
 }
 
 interface User {
@@ -14,32 +15,63 @@ interface User {
   email: string;
 }
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
 const AdminDashboard = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newCategory, setNewCategory] = useState("");
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending">("all");
   const token = localStorage.getItem("token");
 
-  // ✅ Load products
   const fetchProducts = async () => {
     const res = await axios.get(
-      "https://ecommerce-server-or19.onrender.com/api/products"
+      "https://ecommerce-server-or19.onrender.com/api/products?all=true",
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     setProducts(res.data);
   };
 
-  // ✅ Load users (requires admin token)
   const fetchUsers = async () => {
     try {
       const res = await axios.get(
         "https://ecommerce-server-or19.onrender.com/api/users",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(res.data);
-    } catch (err) {
+    } catch {
       console.error("Failed to load users");
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(
+        "https://ecommerce-server-or19.onrender.com/api/categories"
+      );
+      setCategories(res.data);
+    } catch {
+      console.error("Failed to load categories");
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return alert("Category name required");
+    try {
+      const res = await axios.post(
+        "https://ecommerce-server-or19.onrender.com/api/categories",
+        { name: newCategory },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCategories((prev) => [res.data, ...prev]);
+      setNewCategory("");
+    } catch (err) {
+      alert("Failed to add category");
     }
   };
 
@@ -47,9 +79,7 @@ const AdminDashboard = () => {
     try {
       await axios.delete(
         `https://ecommerce-server-or19.onrender.com/api/products/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setProducts(products.filter((p) => p._id !== id));
     } catch {
@@ -57,11 +87,31 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      const res = await axios.put(
+        `https://ecommerce-server-or19.onrender.com/api/products/approve/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProducts((prev) =>
+        prev.map((p) => (p._id === id ? { ...p, isApproved: true } : p))
+      );
+      alert("✅ Product approved");
+    } catch {
+      alert("❌ Approval failed");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchUsers();
+    fetchCategories();
     setLoading(false);
   }, []);
+
+  const filteredProducts =
+    filter === "pending" ? products.filter((p) => !p.isApproved) : products;
 
   if (loading) return <div className="p-4 text-center">Loading...</div>;
 
@@ -114,24 +164,87 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* ✅ Product List */}
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3">🛍 Products</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product) => (
-            <div key={product._id} className="bg-white p-4 rounded shadow">
-              <h4 className="font-semibold">{product.name}</h4>
-              <p className="text-sm text-gray-700 mb-2">${product.price}</p>
-              <button
-                onClick={() => handleDelete(product._id)}
-                className="text-red-600 text-sm"
-              >
-                ❌ Delete
-              </button>
-            </div>
-          ))}
+      {/* ✅ Add Category */}
+      <div className="bg-white mt-6 p-4 rounded shadow max-w-md mx-auto">
+        <h3 className="font-semibold mb-2">📂 Add New Category</h3>
+        <div className="flex gap-2">
+          <input
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            placeholder="e.g. Electronics"
+            className="border p-2 w-full"
+          />
+          <button
+            onClick={handleAddCategory}
+            className="bg-blue-600 text-white px-4 rounded"
+          >
+            Add
+          </button>
         </div>
+        <ul className="mt-3 text-sm text-gray-700">
+          {categories.map((c) => (
+            <li key={c._id}>• {c.name}</li>
+          ))}
+        </ul>
       </div>
+
+      {/* ✅ Product Filter Tabs */}
+      <div className="mt-6 mb-2 flex gap-4 justify-center">
+        <button
+          onClick={() => setFilter("all")}
+          className={`px-4 py-1 rounded ${
+            filter === "all" ? "bg-blue-600 text-white" : "bg-gray-300"
+          }`}
+        >
+          All Products
+        </button>
+        <button
+          onClick={() => setFilter("pending")}
+          className={`px-4 py-1 rounded ${
+            filter === "pending" ? "bg-yellow-500 text-white" : "bg-gray-300"
+          }`}
+        >
+          Pending Approval
+        </button>
+      </div>
+
+      {/* ✅ Product List */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredProducts.map((product) => (
+          <div key={product._id} className="bg-white p-4 rounded shadow">
+            <h4 className="font-semibold">{product.name}</h4>
+            <p className="text-sm text-gray-700 mb-2">
+              ₦{product.price?.toLocaleString()}
+            </p>
+
+            {product.isApproved ? (
+              <span className="text-green-600 text-sm mb-2 block">
+                ✔️ Approved
+              </span>
+            ) : (
+              <button
+                onClick={() => handleApprove(product._id)}
+                className="text-blue-600 text-sm mb-2 block"
+              >
+                ✅ Approve
+              </button>
+            )}
+
+            <button
+              onClick={() => handleDelete(product._id)}
+              className="text-red-600 text-sm"
+            >
+              ❌ Delete
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {filteredProducts.length === 0 && (
+        <p className="text-center text-gray-500 mt-4">
+          No products to display.
+        </p>
+      )}
     </div>
   );
 };

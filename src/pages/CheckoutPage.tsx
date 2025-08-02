@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Fragment } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { PaystackButton } from "react-paystack";
+import { Dialog, Transition } from "@headlessui/react";
 
 interface Product {
   _id: string;
@@ -20,9 +21,15 @@ const CheckoutPage = () => {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(true);
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [successModal, setSuccessModal] = useState(false);
+  const [errorModal, setErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [referenceCode, setReferenceCode] = useState("");
+
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const email = localStorage.getItem("userEmail") || "user@example.com"; // Update this if user data is available
+  const email = localStorage.getItem("userEmail") || "user@example.com";
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -35,7 +42,8 @@ const CheckoutPage = () => {
         );
         setCart(res.data);
       } catch (err) {
-        alert("Failed to fetch cart");
+        setErrorMessage("Failed to fetch cart");
+        setErrorModal(true);
       } finally {
         setLoading(false);
       }
@@ -51,8 +59,8 @@ const CheckoutPage = () => {
     );
   };
 
-  const publicKey = "pk_live_755c52be93e9db58f39401f0ecb9d20df9e0cdbe"; // Replace with your real Paystack public key
-  const amount = calculateTotal() * 100; // Paystack expects amount in kobo
+  const publicKey = "pk_live_755c52be93e9db58f39401f0ecb9d20df9e0cdbe";
+  const amount = calculateTotal() * 100;
   const reference = `ref-${Date.now()}`;
 
   const paystackProps = {
@@ -75,6 +83,9 @@ const CheckoutPage = () => {
       ],
     },
     onSuccess: async (response: any) => {
+      setPlacingOrder(true);
+      setReferenceCode(response.reference);
+
       try {
         const orderPayload = {
           cart,
@@ -96,14 +107,19 @@ const CheckoutPage = () => {
         );
 
         localStorage.removeItem("cart");
-        alert("✅ Payment successful & order placed!");
-        navigate("/my-orders");
+        setSuccessModal(true);
       } catch (err: any) {
-        alert(err.response?.data?.error || "Order failed after payment");
+        setErrorMessage(
+          err.response?.data?.error || "Order failed after payment"
+        );
+        setErrorModal(true);
+      } finally {
+        setPlacingOrder(false);
       }
     },
     onClose: () => {
-      alert("Payment dialog was closed");
+      setErrorMessage("Payment dialog was closed");
+      setErrorModal(true);
     },
   };
 
@@ -162,13 +178,123 @@ const CheckoutPage = () => {
             <PaystackButton
               {...paystackProps}
               className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-              disabled={!address || !phone}
+              disabled={!address || !phone || placingOrder}
             >
-              ✅ Pay Now
+              {placingOrder ? "Placing Order..." : "✅ Pay Now"}
             </PaystackButton>
           </div>
         </>
       )}
+
+      {/* 🔄 Loading Spinner (during order placing) */}
+      {placingOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40">
+          <div className="bg-white p-6 rounded-xl shadow-lg flex items-center gap-4">
+            <svg
+              className="animate-spin h-6 w-6 text-green-600"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              />
+            </svg>
+            <span>Placing your order...</span>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Success Modal with Transaction Summary */}
+      <Transition appear show={successModal} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => {}}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            leave="ease-in duration-200"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/40" />
+          </Transition.Child>
+          <div className="fixed inset-0 flex items-center justify-center">
+            <Dialog.Panel className="bg-white p-6 rounded-xl shadow-xl max-w-sm mx-auto">
+              <Dialog.Title className="text-green-600 text-xl font-bold mb-2">
+                🎉 Payment Successful!
+              </Dialog.Title>
+              <Dialog.Description className="mb-4 text-sm">
+                Your order has been placed. Here’s your transaction summary:
+              </Dialog.Description>
+              <ul className="mb-4 text-sm space-y-1">
+                <li>
+                  🛒 <strong>Items:</strong> {cart.length}
+                </li>
+                <li>
+                  💰 <strong>Amount:</strong> ₦
+                  {calculateTotal().toLocaleString()}
+                </li>
+                <li>
+                  🧾 <strong>Ref:</strong> {referenceCode}
+                </li>
+              </ul>
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded w-full"
+                onClick={() => navigate("/my-orders")}
+              >
+                View My Orders
+              </button>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* ❌ Error Modal */}
+      <Transition appear show={errorModal} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setErrorModal(false)}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            leave="ease-in duration-200"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/40" />
+          </Transition.Child>
+          <div className="fixed inset-0 flex items-center justify-center">
+            <Dialog.Panel className="bg-white p-6 rounded-xl shadow-xl max-w-sm mx-auto">
+              <Dialog.Title className="text-red-600 text-xl font-bold mb-2">
+                ❌ Checkout Failed
+              </Dialog.Title>
+              <Dialog.Description className="mb-4 text-sm">
+                {errorMessage || "Something went wrong during checkout."}
+              </Dialog.Description>
+              <button
+                className="bg-red-600 text-white px-4 py-2 rounded w-full"
+                onClick={() => setErrorModal(false)}
+              >
+                Close
+              </button>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 };

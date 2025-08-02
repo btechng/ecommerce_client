@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.7",
     "axios": "^1.6.0",
     "framer-motion": "^12.23.11",
     "he": "^1.2.0",

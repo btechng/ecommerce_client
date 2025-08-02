@@ -39,6 +39,8 @@ import UserList from "./pages/UserList";
 import OrderList from "./pages/OrderList";
 import ProductList from "./pages/ProductList";
 import AdminLayout from "./pages/AdminLayout";
+import MyOrders from "./pages/MyOrders";
+import PostProduct from "./pages/PostProduct";
 
 const App = () => {
   return (
@@ -60,6 +62,8 @@ const App = () => {
         <Route path="/post-job" element={<PostJob />} />
         <Route path="/build-cv" element={<CVBuilder />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/my-orders" element={<MyOrders />} />
+        <Route path="/post-product" element={<PostProduct />} />
 
         {/* 📄 Static Info */}
         <Route path="/about-us" element={<AboutUs />} />
