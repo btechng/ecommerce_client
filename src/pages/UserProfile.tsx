@@ -18,11 +18,11 @@ export default function UserProfile() {
   const [editing, setEditing] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [passwordData, setPasswordData] = useState({
     newPassword: "",
     confirmPassword: "",
   });
+  const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
 
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState(0);
@@ -31,7 +31,9 @@ export default function UserProfile() {
   const [plan, setPlan] = useState("");
   const [dataAmount, setDataAmount] = useState(0);
   const [transactions, setTransactions] = useState([]);
-
+  const [dataPlans, setDataPlans] = useState<any[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPlanDetails, setSelectedPlanDetails] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("profile");
 
   const token = localStorage.getItem("token");
@@ -77,9 +79,21 @@ export default function UserProfile() {
       }
     };
 
+    const fetchDataPlans = async () => {
+      try {
+        const res = await axios.get(`${apiBase}/api/wallet/data-plans`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setDataPlans(res.data);
+      } catch (err) {
+        console.error("Failed to fetch data plans", err);
+      }
+    };
+
     if (token && userId) {
       fetchBalance();
       fetchTransactions();
+      fetchDataPlans();
     }
   }, []);
 
@@ -137,7 +151,11 @@ export default function UserProfile() {
     }
   };
 
-  const handleBuyData = async () => {
+  const confirmBuyData = async () => {
+    if (dataAmount > balance) {
+      alert("❌ Insufficient wallet balance");
+      return;
+    }
     try {
       await axios.post(
         `${apiBase}/api/wallet/buy-data`,
@@ -146,9 +164,17 @@ export default function UserProfile() {
       );
       alert("✅ Data purchase successful");
       setBalance((prev) => prev - dataAmount);
+      setShowModal(false);
     } catch (err) {
       alert("❌ Data purchase failed");
     }
+  };
+
+  const handleBuyData = () => {
+    const selected = dataPlans.find((p) => p.plan_id === plan);
+    setSelectedPlanDetails(selected);
+    setDataAmount(Number(selected?.price) || 0);
+    setShowModal(true);
   };
 
   const tabs = [
@@ -184,6 +210,36 @@ export default function UserProfile() {
           </button>
         ))}
       </div>
+
+      {showModal && selectedPlanDetails && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">
+              Confirm Data Purchase
+            </h2>
+            <p className="mb-2">Network: {network}</p>
+            <p className="mb-2">Plan: {selectedPlanDetails?.name}</p>
+            <p className="mb-2">Price: ₦{selectedPlanDetails?.price}</p>
+            <p className="mb-4">
+              Validity: {selectedPlanDetails?.validity || "N/A"}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded"
+                onClick={confirmBuyData}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -281,7 +337,6 @@ export default function UserProfile() {
               <h2 className="text-2xl font-bold mb-4">
                 💼 Wallet Balance: ₦{balance.toLocaleString()}
               </h2>
-
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Fund Wallet</h3>
                 <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -300,7 +355,6 @@ export default function UserProfile() {
                   </button>
                 </div>
               </div>
-
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">📡 Buy Data</h3>
                 <div className="space-y-3">
@@ -318,29 +372,26 @@ export default function UserProfile() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
-                  <input
-                    type="text"
-                    placeholder="Plan (e.g. 1GB)"
+                  <select
                     className="border p-2 w-full rounded"
                     value={plan}
                     onChange={(e) => setPlan(e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Amount"
-                    className="border p-2 w-full rounded"
-                    value={dataAmount}
-                    onChange={(e) => setDataAmount(Number(e.target.value))}
-                  />
+                  >
+                    <option value="">Select Plan</option>
+                    {dataPlans.map((p) => (
+                      <option key={p.plan_id} value={p.plan_id}>
+                        {p.name} - ₦{p.price}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     onClick={handleBuyData}
-                    className="bg-green-600 text-white px-4 py-2 rounded"
+                    className="bg-green-600 text-white px-4 py-2 rounded w-full"
                   >
                     Buy Now
                   </button>
                 </div>
               </div>
-
               <div>
                 <h3 className="text-lg font-semibold mb-2">
                   💳 Transaction History
