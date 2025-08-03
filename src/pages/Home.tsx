@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import TriviaGame from "../components/TriviaGame";
@@ -24,6 +24,33 @@ interface LeaderboardEntry {
 const IMAGE_URL =
   "https://lh3.googleusercontent.com/d/1xHmVJhIRbXYUYZ0pAIXDVdbapWq7dxl6";
 
+const heroText = "Find Products and Job Opportunities on One Platform";
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const buttonStagger = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.15,
+    },
+  }),
+};
+
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [jobs, setJobs] = useState<Product[]>([]);
@@ -33,6 +60,9 @@ export default function Home() {
   const [viewAllProducts, setViewAllProducts] = useState(false);
   const [showTrivia, setShowTrivia] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  const ctaRef = useRef(null);
+  const isInView = useInView(ctaRef, { once: true });
 
   useEffect(() => {
     axios
@@ -86,7 +116,7 @@ export default function Home() {
       <div className="absolute inset-0 bg-black/70 z-0" />
       <div className="relative z-10">
         {/* HERO SECTION */}
-        <div className="w-full py-8 px-4 text-center text-white">
+        <div className="w-full py-12 px-4 text-center text-white relative">
           <motion.img
             src={IMAGE_URL}
             alt="Logo"
@@ -99,45 +129,67 @@ export default function Home() {
             }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           />
-          <p className="text-lg mb-4 font-medium">
-            Find Products and Job Opportunities on One Platform
-          </p>
 
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-3xl mx-auto">
-            <Link
-              to="/post-product"
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full sm:w-auto"
-            >
-              🛒 Sell Your Product
-            </Link>
-            <Link
-              to="/post-job"
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full sm:w-auto"
-            >
-              📢 Post a Job
-            </Link>
-            <Link
-              to="/build-cv"
-              className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 w-full sm:w-auto"
-            >
-              📄 Build Your CV
-            </Link>
-            <Link
-              to="/category/products"
-              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 w-full sm:w-auto"
-            >
-              🛍️ See Products For Sale
-            </Link>
+          <motion.p
+            className="text-lg mb-6 font-medium"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {heroText.split("").map((char, index) => (
+              <motion.span key={index} variants={cardVariants}>
+                {char}
+              </motion.span>
+            ))}
+          </motion.p>
+
+          <div className="flex flex-wrap justify-center items-center px-4 w-full sm:w-auto mt-6 gap-3 sm:gap-4 md:gap-6">
+            {[
+              "/post-product",
+              "/post-job",
+              "/build-cv",
+              "/category/products",
+            ].map((path, i) => (
+              <motion.div
+                key={path}
+                custom={i}
+                variants={buttonStagger}
+                initial="hidden"
+                animate="visible"
+              >
+                <Link
+                  to={path}
+                  className={
+                    [
+                      "bg-green-600",
+                      "bg-blue-600",
+                      "bg-purple-600",
+                      "bg-orange-500",
+                    ][i] +
+                    " text-white px-4 py-2 rounded-md shadow hover:brightness-110"
+                  }
+                >
+                  {["🛒 Sell", "📢 Job", "📄 CV", "🛍️ Shop"][i]}
+                </Link>
+              </motion.div>
+            ))}
           </div>
 
-          <div className="mt-6">
+          {/* Scroll-triggered CTA */}
+          <motion.div
+            ref={ctaRef}
+            initial={{ opacity: 0, y: 40 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="mt-10"
+          >
             <Link
               to="/category/jobvacancy"
-              className="bg-yellow-500 text-black font-semibold px-6 py-3 rounded-lg block max-w-xl mx-auto hover:bg-yellow-600 transition"
+              className="bg-yellow-500 text-black font-semibold px-6 py-3 rounded-lg inline-block hover:bg-yellow-600 transition"
             >
-              🔎 Recent Jobs And Vacancies
+              🔎 Recent Jobs & Vacancies
             </Link>
-          </div>
+          </motion.div>
         </div>
 
         {/* JOBS SECTION */}
@@ -153,25 +205,20 @@ export default function Home() {
             className="w-full sm:w-80 border p-2 rounded mb-4 text-black"
           />
           {loading ? (
-            <>
-              <div className="flex justify-center mb-4">
-                <div className="bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 animate-pulse h-4 w-40 rounded" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-white/10 rounded-xl p-4 animate-pulse space-y-2"
-                  >
-                    <div className="h-4 bg-gray-300 rounded w-24"></div>
-                    <div className="h-5 bg-gray-300 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-300 rounded w-full"></div>
-                    <div className="h-3 bg-gray-300 rounded w-5/6"></div>
-                    <div className="h-3 bg-gray-300 rounded w-1/3 mt-2"></div>
-                  </div>
-                ))}
-              </div>
-            </>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white/10 rounded-xl p-4 animate-pulse space-y-2"
+                >
+                  <div className="h-4 bg-gray-300 rounded w-24"></div>
+                  <div className="h-5 bg-gray-300 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-300 rounded w-full"></div>
+                  <div className="h-3 bg-gray-300 rounded w-5/6"></div>
+                  <div className="h-3 bg-gray-300 rounded w-1/3 mt-2"></div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {filteredJobs.map((job) => (
@@ -210,24 +257,19 @@ export default function Home() {
             className="w-full sm:w-80 border p-2 rounded mb-4 text-black"
           />
           {loading ? (
-            <>
-              <div className="flex justify-center mb-4">
-                <div className="bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 animate-pulse h-4 w-40 rounded" />
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-white/10 rounded-xl animate-pulse p-3"
-                  >
-                    <div className="bg-gray-300 rounded-lg h-32 mb-2 w-full" />
-                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-1" />
-                    <div className="h-3 bg-gray-300 rounded w-full mb-1" />
-                    <div className="h-3 bg-gray-300 rounded w-1/2" />
-                  </div>
-                ))}
-              </div>
-            </>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white/10 rounded-xl animate-pulse p-3"
+                >
+                  <div className="bg-gray-300 rounded-lg h-32 mb-2 w-full" />
+                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-1" />
+                  <div className="h-3 bg-gray-300 rounded w-full mb-1" />
+                  <div className="h-3 bg-gray-300 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
