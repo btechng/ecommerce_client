@@ -41,6 +41,7 @@ import ProductList from "./pages/ProductList";
 import AdminLayout from "./pages/AdminLayout";
 import MyOrders from "./pages/MyOrders";
 import PostProduct from "./pages/PostProduct";
+import SuccessCallback from "./pages/SuccessCallback";
 
 const App = () => {
   return (
@@ -64,6 +65,7 @@ const App = () => {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/my-orders" element={<MyOrders />} />
         <Route path="/post-product" element={<PostProduct />} />
+        <Route path="/wallet/success" element={<SuccessCallback />} />
 
         {/* 📄 Static Info */}
         <Route path="/about-us" element={<AboutUs />} />

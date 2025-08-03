@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import axios from "axios";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { User, Wallet, Eye } from "lucide-react";
 
 interface Product {
   _id: string;
@@ -16,13 +18,25 @@ export default function UserProfile() {
   const [editing, setEditing] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
-
   const [passwordData, setPasswordData] = useState({
     newPassword: "",
     confirmPassword: "",
   });
+
+  const [balance, setBalance] = useState(0);
+  const [amount, setAmount] = useState(0);
+  const [network, setNetwork] = useState("");
+  const [phone, setPhone] = useState("");
+  const [plan, setPlan] = useState("");
+  const [dataAmount, setDataAmount] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+
+  const [activeTab, setActiveTab] = useState("profile");
+
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
+  const apiBase = "https://ecommerce-server-or19.onrender.com";
 
   useEffect(() => {
     const storedName = localStorage.getItem("username");
@@ -35,9 +49,38 @@ export default function UserProfile() {
       setEmail(storedEmail);
       setNewEmail(storedEmail);
     }
-
     const viewed = JSON.parse(localStorage.getItem("recentlyViewed") || "[]");
     setRecentlyViewed(viewed);
+
+    const fetchBalance = async () => {
+      try {
+        const res = await axios.get(`${apiBase}/api/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setBalance(res.data.balance || 0);
+      } catch (err) {
+        console.error("Failed to fetch balance", err);
+      }
+    };
+
+    const fetchTransactions = async () => {
+      try {
+        const res = await axios.get(
+          `${apiBase}/api/users/${userId}/transactions`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setTransactions(res.data);
+      } catch (err) {
+        console.error("Failed to fetch transactions", err);
+      }
+    };
+
+    if (token && userId) {
+      fetchBalance();
+      fetchTransactions();
+    }
   }, []);
 
   const handleSaveProfile = async () => {
@@ -45,15 +88,10 @@ export default function UserProfile() {
     setEmail(newEmail);
     localStorage.setItem("username", newName);
     localStorage.setItem("email", newEmail);
-
-    // Optional: update to backend
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
-
     if (userId && token) {
       try {
         await axios.put(
-          `https://ecommerce-server-or19.onrender.com/api/users/${userId}`,
+          `${apiBase}/api/users/${userId}`,
           { name: newName, email: newEmail },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -62,25 +100,19 @@ export default function UserProfile() {
         alert("Failed to update profile on server.");
       }
     }
-
     setEditing(false);
   };
 
   const handleChangePassword = async () => {
     const { newPassword, confirmPassword } = passwordData;
-
     if (newPassword !== confirmPassword) {
       alert("Passwords do not match.");
       return;
     }
-
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
-
     if (userId && token) {
       try {
         await axios.put(
-          `https://ecommerce-server-or19.onrender.com/api/users/${userId}`,
+          `${apiBase}/api/users/${userId}`,
           { password: newPassword },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -92,120 +124,283 @@ export default function UserProfile() {
     }
   };
 
+  const handleFundWallet = async () => {
+    try {
+      const res = await axios.post(
+        `${apiBase}/api/wallet/fund`,
+        { amount },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      window.location.href = res.data.data.authorization_url;
+    } catch (err) {
+      alert("Error initiating payment");
+    }
+  };
+
+  const handleBuyData = async () => {
+    try {
+      await axios.post(
+        `${apiBase}/api/wallet/buy-data`,
+        { network, phone, plan, amount: dataAmount },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("✅ Data purchase successful");
+      setBalance((prev) => prev - dataAmount);
+    } catch (err) {
+      alert("❌ Data purchase failed");
+    }
+  };
+
+  const tabs = [
+    {
+      key: "profile",
+      label: "Profile",
+      icon: <User className="w-4 h-4 mr-1" />,
+    },
+    {
+      key: "wallet",
+      label: "Wallet",
+      icon: <Wallet className="w-4 h-4 mr-1" />,
+    },
+    { key: "viewed", label: "Viewed", icon: <Eye className="w-4 h-4 mr-1" /> },
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto p-6 pt-24">
-      <h1 className="text-3xl font-bold mb-6">Your Profile</h1>
-
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        {!editing ? (
-          <div>
-            <p className="mb-2 text-lg">👤 Name: {userName}</p>
-            <p className="mb-4 text-lg">📧 Email: {email}</p>
-            <button
-              onClick={() => setEditing(true)}
-              className="text-blue-600 underline"
-            >
-              ✏️ Edit Profile
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <input
-              type="text"
-              className="border p-2 w-full rounded"
-              placeholder="Name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <input
-              type="email"
-              className="border p-2 w-full rounded"
-              placeholder="Email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={handleSaveProfile}
-                className="bg-green-600 text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setEditing(false)}
-                className="text-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Change Password */}
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">🔐 Change Password</h2>
-        <div className="space-y-3">
-          <input
-            type="password"
-            placeholder="New Password"
-            className="border p-2 w-full rounded"
-            value={passwordData.newPassword}
-            onChange={(e) =>
-              setPasswordData({ ...passwordData, newPassword: e.target.value })
-            }
-          />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            className="border p-2 w-full rounded"
-            value={passwordData.confirmPassword}
-            onChange={(e) =>
-              setPasswordData({
-                ...passwordData,
-                confirmPassword: e.target.value,
-              })
-            }
-          />
+    <div className="max-w-5xl mx-auto p-6 pt-24">
+      <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
+      <div className="flex space-x-4 mb-6 border-b">
+        {tabs.map((tab) => (
           <button
-            onClick={handleChangePassword}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center px-4 py-2 transition-all duration-300 ${
+              activeTab === tab.key
+                ? "border-b-2 border-blue-600 font-bold"
+                : "text-gray-600 hover:text-blue-600"
+            }`}
           >
-            Update Password
+            {tab.icon}
+            {tab.label}
           </button>
-        </div>
+        ))}
       </div>
 
-      {/* Recently Viewed */}
-      <div className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">🕵️ Recently Viewed</h2>
-        {recentlyViewed.length === 0 ? (
-          <p className="text-gray-500">You haven't viewed any items yet.</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {recentlyViewed.map((item) => (
-              <Link to={`/product/${item._id}`} key={item._id}>
-                <div className="border rounded-xl p-3 bg-white shadow hover:shadow-md transition">
-                  {item.imageUrl &&
-                    !item.category?.toLowerCase().includes("job") && (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="h-32 w-full object-cover rounded mb-2"
-                      />
-                    )}
-                  <h3 className="text-md font-semibold truncate">
-                    {item.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {item.description}
-                  </p>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -30 }}
+          transition={{ duration: 0.3 }}
+        >
+          {activeTab === "profile" && (
+            <div className="bg-white shadow rounded-lg p-6 mb-8">
+              {!editing ? (
+                <div>
+                  <p className="mb-2 text-lg">👤 Name: {userName}</p>
+                  <p className="mb-4 text-lg">📧 Email: {email}</p>
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="text-blue-600 underline"
+                  >
+                    ✏️ Edit Profile
+                  </button>
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+              ) : (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    className="border p-2 w-full rounded"
+                    placeholder="Name"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                  />
+                  <input
+                    type="email"
+                    className="border p-2 w-full rounded"
+                    placeholder="Email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSaveProfile}
+                      className="bg-green-600 text-white px-4 py-2 rounded"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditing(false)}
+                      className="text-gray-500"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="mt-6 space-y-3">
+                <h2 className="text-xl font-semibold mb-1">
+                  🔐 Change Password
+                </h2>
+                <input
+                  type="password"
+                  placeholder="New Password"
+                  className="border p-2 w-full rounded"
+                  value={passwordData.newPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      newPassword: e.target.value,
+                    })
+                  }
+                />
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  className="border p-2 w-full rounded"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                />
+                <button
+                  onClick={handleChangePassword}
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Update Password
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "wallet" && (
+            <div className="bg-white shadow rounded-lg p-6 mb-8">
+              <h2 className="text-2xl font-bold mb-4">
+                💼 Wallet Balance: ₦{balance.toLocaleString()}
+              </h2>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">Fund Wallet</h3>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <input
+                    type="number"
+                    placeholder="Amount (₦)"
+                    className="border p-2 rounded w-full sm:w-1/2"
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
+                  />
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                    onClick={handleFundWallet}
+                  >
+                    Fund Now
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">📡 Buy Data</h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Network (e.g. MTN)"
+                    className="border p-2 w-full rounded"
+                    value={network}
+                    onChange={(e) => setNetwork(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Phone Number"
+                    className="border p-2 w-full rounded"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Plan (e.g. 1GB)"
+                    className="border p-2 w-full rounded"
+                    value={plan}
+                    onChange={(e) => setPlan(e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Amount"
+                    className="border p-2 w-full rounded"
+                    value={dataAmount}
+                    onChange={(e) => setDataAmount(Number(e.target.value))}
+                  />
+                  <button
+                    onClick={handleBuyData}
+                    className="bg-green-600 text-white px-4 py-2 rounded"
+                  >
+                    Buy Now
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">
+                  💳 Transaction History
+                </h3>
+                {transactions.length === 0 ? (
+                  <p className="text-gray-500">No transactions yet.</p>
+                ) : (
+                  <ul className="divide-y">
+                    {transactions.map((tx: any, i: number) => (
+                      <li key={i} className="py-2">
+                        <span className="font-medium">
+                          {tx.type.toUpperCase()}:
+                        </span>{" "}
+                        ₦{tx.amount} – {tx.description} <br />
+                        <span className="text-sm text-gray-500">
+                          {new Date(tx.date).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "viewed" && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-3">🕵️ Recently Viewed</h2>
+              {recentlyViewed.length === 0 ? (
+                <p className="text-gray-500">
+                  You haven't viewed any items yet.
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {recentlyViewed.map((item) => (
+                    <Link to={`/product/${item._id}`} key={item._id}>
+                      <div className="border rounded-xl p-3 bg-white shadow hover:shadow-md transition">
+                        {item.imageUrl &&
+                          !item.category?.toLowerCase().includes("job") && (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="h-32 w-full object-cover rounded mb-2"
+                            />
+                          )}
+                        <h3 className="text-md font-semibold truncate">
+                          {item.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {item.description}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
