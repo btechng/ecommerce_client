@@ -3,6 +3,8 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Wallet, Eye } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface Product {
   _id: string;
@@ -23,7 +25,6 @@ export default function UserProfile() {
     confirmPassword: "",
   });
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
-
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState(0);
   const [network, setNetwork] = useState("");
@@ -35,6 +36,10 @@ export default function UserProfile() {
   const [showModal, setShowModal] = useState(false);
   const [selectedPlanDetails, setSelectedPlanDetails] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("profile");
+
+  const [airtimeNetwork, setAirtimeNetwork] = useState("");
+  const [airtimePhone, setAirtimePhone] = useState("");
+  const [airtimeAmount, setAirtimeAmount] = useState(0);
 
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
@@ -51,6 +56,7 @@ export default function UserProfile() {
       setEmail(storedEmail);
       setNewEmail(storedEmail);
     }
+
     const viewed = JSON.parse(localStorage.getItem("recentlyViewed") || "[]");
     setRecentlyViewed(viewed);
 
@@ -97,47 +103,6 @@ export default function UserProfile() {
     }
   }, []);
 
-  const handleSaveProfile = async () => {
-    setUserName(newName);
-    setEmail(newEmail);
-    localStorage.setItem("username", newName);
-    localStorage.setItem("email", newEmail);
-    if (userId && token) {
-      try {
-        await axios.put(
-          `${apiBase}/api/users/${userId}`,
-          { name: newName, email: newEmail },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert("Profile updated!");
-      } catch {
-        alert("Failed to update profile on server.");
-      }
-    }
-    setEditing(false);
-  };
-
-  const handleChangePassword = async () => {
-    const { newPassword, confirmPassword } = passwordData;
-    if (newPassword !== confirmPassword) {
-      alert("Passwords do not match.");
-      return;
-    }
-    if (userId && token) {
-      try {
-        await axios.put(
-          `${apiBase}/api/users/${userId}`,
-          { password: newPassword },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert("Password updated successfully.");
-        setPasswordData({ newPassword: "", confirmPassword: "" });
-      } catch {
-        alert("Failed to update password.");
-      }
-    }
-  };
-
   const handleFundWallet = async () => {
     try {
       const res = await axios.post(
@@ -147,13 +112,13 @@ export default function UserProfile() {
       );
       window.location.href = res.data.data.authorization_url;
     } catch (err) {
-      alert("Error initiating payment");
+      toast.error("❌ Error initiating payment");
     }
   };
 
   const confirmBuyData = async () => {
     if (dataAmount > balance) {
-      alert("❌ Insufficient wallet balance");
+      toast.error("❌ Insufficient wallet balance");
       return;
     }
     try {
@@ -162,11 +127,40 @@ export default function UserProfile() {
         { network, phone, plan, amount: dataAmount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("✅ Data purchase successful");
+      toast.success("✅ Data purchase successful");
       setBalance((prev) => prev - dataAmount);
       setShowModal(false);
     } catch (err) {
-      alert("❌ Data purchase failed");
+      toast.error("❌ Data purchase failed");
+    }
+  };
+
+  const confirmBuyAirtime = async () => {
+    if (airtimeAmount > balance) {
+      toast.error("❌ Insufficient wallet balance");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${apiBase}/api/wallet/buy-airtime`,
+        {
+          network: airtimeNetwork,
+          phone: airtimePhone,
+          amount: airtimeAmount,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("✅ Airtime purchase successful");
+      setBalance((prev) => prev - airtimeAmount);
+      setAirtimeAmount(0);
+      setAirtimePhone("");
+      setAirtimeNetwork("");
+    } catch (err) {
+      toast.error("❌ Airtime purchase failed");
+      console.error(err);
     }
   };
 
@@ -193,7 +187,9 @@ export default function UserProfile() {
 
   return (
     <div className="max-w-5xl mx-auto p-6 pt-24">
+      <ToastContainer />
       <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
+
       <div className="flex space-x-4 mb-6 border-b">
         {tabs.map((tab) => (
           <button
@@ -210,36 +206,6 @@ export default function UserProfile() {
           </button>
         ))}
       </div>
-
-      {showModal && selectedPlanDetails && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">
-              Confirm Data Purchase
-            </h2>
-            <p className="mb-2">Network: {network}</p>
-            <p className="mb-2">Plan: {selectedPlanDetails?.name}</p>
-            <p className="mb-2">Price: ₦{selectedPlanDetails?.price}</p>
-            <p className="mb-4">
-              Validity: {selectedPlanDetails?.validity || "N/A"}
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-green-600 text-white px-4 py-2 rounded"
-                onClick={confirmBuyData}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -280,7 +246,23 @@ export default function UserProfile() {
                   />
                   <div className="flex gap-3">
                     <button
-                      onClick={handleSaveProfile}
+                      onClick={async () => {
+                        try {
+                          await axios.put(
+                            `${apiBase}/api/users/${userId}`,
+                            { name: newName, email: newEmail },
+                            { headers: { Authorization: `Bearer ${token}` } }
+                          );
+                          setUserName(newName);
+                          setEmail(newEmail);
+                          setEditing(false);
+                          localStorage.setItem("username", newName);
+                          localStorage.setItem("email", newEmail);
+                          toast.success("✅ Profile updated");
+                        } catch {
+                          toast.error("❌ Failed to update profile");
+                        }
+                      }}
                       className="bg-green-600 text-white px-4 py-2 rounded"
                     >
                       Save
@@ -294,6 +276,7 @@ export default function UserProfile() {
                   </div>
                 </div>
               )}
+
               <div className="mt-6 space-y-3">
                 <h2 className="text-xl font-semibold mb-1">
                   🔐 Change Password
@@ -323,96 +306,28 @@ export default function UserProfile() {
                   }
                 />
                 <button
-                  onClick={handleChangePassword}
+                  onClick={async () => {
+                    const { newPassword, confirmPassword } = passwordData;
+                    if (newPassword !== confirmPassword) {
+                      toast.error("❌ Passwords do not match");
+                      return;
+                    }
+                    try {
+                      await axios.put(
+                        `${apiBase}/api/users/${userId}`,
+                        { password: newPassword },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                      );
+                      setPasswordData({ newPassword: "", confirmPassword: "" });
+                      toast.success("✅ Password updated");
+                    } catch {
+                      toast.error("❌ Failed to update password");
+                    }
+                  }}
                   className="bg-blue-600 text-white px-4 py-2 rounded"
                 >
                   Update Password
                 </button>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "wallet" && (
-            <div className="bg-white shadow rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold mb-4">
-                💼 Wallet Balance: ₦{balance.toLocaleString()}
-              </h2>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Fund Wallet</h3>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <input
-                    type="number"
-                    placeholder="Amount (₦)"
-                    className="border p-2 rounded w-full sm:w-1/2"
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value))}
-                  />
-                  <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
-                    onClick={handleFundWallet}
-                  >
-                    Fund Now
-                  </button>
-                </div>
-              </div>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">📡 Buy Data</h3>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Network (e.g. MTN)"
-                    className="border p-2 w-full rounded"
-                    value={network}
-                    onChange={(e) => setNetwork(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Phone Number"
-                    className="border p-2 w-full rounded"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                  <select
-                    className="border p-2 w-full rounded"
-                    value={plan}
-                    onChange={(e) => setPlan(e.target.value)}
-                  >
-                    <option value="">Select Plan</option>
-                    {dataPlans.map((p) => (
-                      <option key={p.plan_id} value={p.plan_id}>
-                        {p.name} - ₦{p.price}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={handleBuyData}
-                    className="bg-green-600 text-white px-4 py-2 rounded w-full"
-                  >
-                    Buy Now
-                  </button>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  💳 Transaction History
-                </h3>
-                {transactions.length === 0 ? (
-                  <p className="text-gray-500">No transactions yet.</p>
-                ) : (
-                  <ul className="divide-y">
-                    {transactions.map((tx: any, i: number) => (
-                      <li key={i} className="py-2">
-                        <span className="font-medium">
-                          {tx.type.toUpperCase()}:
-                        </span>{" "}
-                        ₦{tx.amount} – {tx.description} <br />
-                        <span className="text-sm text-gray-500">
-                          {new Date(tx.date).toLocaleString()}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
             </div>
           )}
@@ -452,6 +367,37 @@ export default function UserProfile() {
           )}
         </motion.div>
       </AnimatePresence>
+
+      {/* Buy Data Confirmation Modal */}
+      {showModal && selectedPlanDetails && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">
+              Confirm Data Purchase
+            </h2>
+            <p className="mb-2">Network: {network}</p>
+            <p className="mb-2">Plan: {selectedPlanDetails?.name}</p>
+            <p className="mb-2">Price: ₦{selectedPlanDetails?.price}</p>
+            <p className="mb-4">
+              Validity: {selectedPlanDetails?.validity || "N/A"}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded"
+                onClick={confirmBuyData}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
