@@ -160,7 +160,6 @@ export default function UserProfile() {
       setAirtimeNetwork("");
     } catch (err) {
       toast.error("❌ Airtime purchase failed");
-      console.error(err);
     }
   };
 
@@ -332,6 +331,106 @@ export default function UserProfile() {
             </div>
           )}
 
+          {activeTab === "wallet" && (
+            <div className="bg-white shadow rounded-lg p-6 mb-8">
+              <h2 className="text-2xl font-bold mb-4">
+                💼 Wallet Balance: ₦{balance.toLocaleString()}
+              </h2>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">Fund Wallet</h3>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <input
+                    type="number"
+                    placeholder="Amount (₦)"
+                    className="border p-2 rounded w-full sm:w-1/2"
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
+                  />
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                    onClick={handleFundWallet}
+                  >
+                    Fund Now
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">📡 Buy Data</h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Network"
+                    className="border p-2 w-full rounded"
+                    value={network}
+                    onChange={(e) => setNetwork(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Phone"
+                    className="border p-2 w-full rounded"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                  <select
+                    className="border p-2 w-full rounded"
+                    value={plan}
+                    onChange={(e) => setPlan(e.target.value)}
+                  >
+                    <option value="">Select Plan</option>
+                    {dataPlans.map((p) => (
+                      <option key={p.plan_id} value={p.plan_id}>
+                        {p.name} - ₦{p.price}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleBuyData}
+                    className="bg-green-600 text-white px-4 py-2 rounded w-full"
+                  >
+                    Buy Now
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-8 bg-yellow-50 border border-yellow-300 rounded-lg p-4 shadow-sm">
+                <h3 className="text-lg font-bold text-yellow-800 mb-3">
+                  📞 Buy Airtime
+                </h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Network"
+                    className="border border-yellow-300 p-2 w-full rounded"
+                    value={airtimeNetwork}
+                    onChange={(e) => setAirtimeNetwork(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Phone Number"
+                    className="border border-yellow-300 p-2 w-full rounded"
+                    value={airtimePhone}
+                    onChange={(e) => setAirtimePhone(e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Amount"
+                    className="border border-yellow-300 p-2 w-full rounded"
+                    value={airtimeAmount}
+                    onChange={(e) => setAirtimeAmount(Number(e.target.value))}
+                  />
+                  <button
+                    onClick={confirmBuyAirtime}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold px-4 py-2 rounded w-full transition-all"
+                  >
+                    🚀 Buy Airtime Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "viewed" && (
             <div className="bg-white shadow rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-3">🕵️ Recently Viewed</h2>
@@ -368,7 +467,6 @@ export default function UserProfile() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Buy Data Confirmation Modal */}
       {showModal && selectedPlanDetails && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
