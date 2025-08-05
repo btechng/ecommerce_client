@@ -5,6 +5,9 @@ import { motion, useInView } from "framer-motion";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import TriviaGame from "../components/TriviaGame";
+import HeroImage from "../images/1000359737.jpg";
+import LogoImage from "../images/1000359731.jpg";
+import ButtonBackground from "../images/1000359737.jpg";
 
 interface Product {
   _id: string;
@@ -20,9 +23,6 @@ interface LeaderboardEntry {
   name: string;
   score: number;
 }
-
-const IMAGE_URL =
-  "https://lh3.googleusercontent.com/d/1xHmVJhIRbXYUYZ0pAIXDVdbapWq7dxl6";
 
 const heroText = "Find Products and Job Opportunities on One Platform";
 
@@ -111,14 +111,13 @@ export default function Home() {
   return (
     <div
       className="relative min-h-screen bg-cover bg-fixed bg-no-repeat"
-      style={{ backgroundImage: `url(${IMAGE_URL})` }}
+      style={{ backgroundImage: `url(${HeroImage})` }}
     >
       <div className="absolute inset-0 bg-black/70 z-0" />
       <div className="relative z-10">
-        {/* HERO SECTION */}
         <div className="w-full py-12 px-4 text-center text-white relative">
           <motion.img
-            src={IMAGE_URL}
+            src={LogoImage}
             alt="Logo"
             className="h-20 rounded-full mx-auto mb-4"
             initial={{ scale: 0, opacity: 0 }}
@@ -143,39 +142,49 @@ export default function Home() {
             ))}
           </motion.p>
 
-          <div className="flex flex-wrap justify-center items-center px-4 w-full sm:w-auto mt-6 gap-3 sm:gap-4 md:gap-6">
-            {[
-              "/post-product",
-              "/post-job",
-              "/build-cv",
-              "/category/products",
-            ].map((path, i) => (
-              <motion.div
-                key={path}
-                custom={i}
-                variants={buttonStagger}
-                initial="hidden"
-                animate="visible"
-              >
-                <Link
-                  to={path}
-                  className={
-                    [
-                      "bg-green-600",
-                      "bg-blue-600",
-                      "bg-purple-600",
-                      "bg-orange-500",
-                    ][i] +
-                    " text-white px-4 py-2 rounded-md shadow hover:brightness-110"
-                  }
+          <div
+            className="w-full py-8 px-4 rounded-lg shadow-lg bg-cover bg-center bg-no-repeat text-center relative mb-10"
+            style={{ backgroundImage: `url(${ButtonBackground})` }}
+          >
+            <h2 className="text-2xl font-bold mb-4 text-white drop-shadow-lg">
+              🎉 Welcome to TasknCart! Join us to Post Products, Find Jobs &
+              More
+            </h2>
+            <div className="flex flex-wrap justify-center items-center px-4 w-full sm:w-auto mt-6 gap-3 sm:gap-4 md:gap-6">
+              {[
+                "/register",
+                "/post-product",
+                "/post-job",
+                "/build-cv",
+                "/category/products",
+              ].map((path, i) => (
+                <motion.div
+                  key={path}
+                  custom={i}
+                  variants={buttonStagger}
+                  initial="hidden"
+                  animate="visible"
                 >
-                  {["🛒 Sell", "📢 Job", "📄 CV", "🛍️ Shop"][i]}
-                </Link>
-              </motion.div>
-            ))}
+                  <Link
+                    to={path}
+                    className={
+                      [
+                        "bg-green-600",
+                        "bg-blue-600",
+                        "bg-purple-600",
+                        "bg-orange-500",
+                        "bg-pink-500",
+                      ][i] +
+                      " text-white px-4 py-2 rounded-md shadow hover:brightness-110"
+                    }
+                  >
+                    {["Sign Up", "🛒 Sell", "📢 Job", "📄 CV", "🛍️ Shop"][i]}
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
-          {/* Scroll-triggered CTA */}
           <motion.div
             ref={ctaRef}
             initial={{ opacity: 0, y: 40 }}
@@ -192,7 +201,6 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* JOBS SECTION */}
         <div className="p-4 max-w-6xl mx-auto">
           <h2 className="text-white text-xl font-semibold mb-2">
             🟡 Jobs & Vacancies
@@ -246,7 +254,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* PRODUCTS SECTION */}
         <div className="p-4 max-w-6xl mx-auto">
           <h2 className="text-white text-xl font-semibold mb-2">🛒 Products</h2>
           <input
@@ -311,7 +318,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* TRIVIA SECTION */}
         <div className="px-4 pb-20 max-w-4xl mx-auto">
           <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <h2 className="text-2xl font-bold text-indigo-700 mb-4">

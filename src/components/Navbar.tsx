@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+import NavImage from "../images/1000359731.jpg";
 
 const slugify = (text: string) =>
   text
@@ -79,7 +80,7 @@ const Navbar = () => {
           {/* ✅ Logo */}
           <Link to="/" className="flex items-center">
             <motion.img
-              src="https://lh3.googleusercontent.com/d/1XhHYygaVSvHitgWS3DCqg2rFyFrPobA0"
+              src={NavImage}
               alt="Logo"
               className="h-10 w-auto object-contain"
               initial={{ scale: 0 }}

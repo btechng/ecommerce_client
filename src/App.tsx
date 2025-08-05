@@ -65,7 +65,7 @@ const App = () => {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/my-orders" element={<MyOrders />} />
         <Route path="/post-product" element={<PostProduct />} />
-        <Route path="/wallet/success" element={<SuccessCallback />} />
+        <Route path="/wallet/callback" element={<SuccessCallback />} />
 
         {/* 📄 Static Info */}
         <Route path="/about-us" element={<AboutUs />} />
