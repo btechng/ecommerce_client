@@ -147,8 +147,7 @@ export default function Home() {
             style={{ backgroundImage: `url(${ButtonBackground})` }}
           >
             <h2 className="text-2xl font-bold mb-4 text-white drop-shadow-lg">
-              🎉 Welcome to TasknCart! Join us to Post Products, Find Jobs &
-              More
+              🎉 Welcome to TasknCart!
             </h2>
             <div className="flex flex-wrap justify-center items-center px-4 w-full sm:w-auto mt-6 gap-3 sm:gap-4 md:gap-6">
               {[

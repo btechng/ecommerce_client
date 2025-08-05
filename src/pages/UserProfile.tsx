@@ -97,7 +97,14 @@ export default function UserProfile() {
     };
 
     if (token && userId) {
-      fetchBalance();
+      const cachedBalance = localStorage.getItem("balance");
+      if (cachedBalance) {
+        setBalance(Number(cachedBalance));
+        localStorage.removeItem("balance");
+      } else {
+        fetchBalance();
+      }
+
       fetchTransactions();
       fetchDataPlans();
     }
@@ -214,6 +221,7 @@ export default function UserProfile() {
           exit={{ opacity: 0, x: -30 }}
           transition={{ duration: 0.3 }}
         >
+          {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="bg-white shadow rounded-lg p-6 mb-8">
               {!editing ? (
