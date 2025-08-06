@@ -13,6 +13,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  balance?: number;
 }
 
 interface Category {
@@ -27,6 +28,12 @@ const AdminDashboard = () => {
   const [newCategory, setNewCategory] = useState("");
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending">("all");
+
+  // Manual funding state
+  const [fundEmail, setFundEmail] = useState("");
+  const [fundAmount, setFundAmount] = useState("");
+  const [fundResult, setFundResult] = useState<string | null>(null);
+
   const token = localStorage.getItem("token");
 
   const fetchProducts = async () => {
@@ -107,6 +114,30 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleManualFund = async () => {
+    if (!fundEmail || !fundAmount) {
+      alert("Email and amount are required");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        "https://ecommerce-server-or19.onrender.com/api/wallet/manual-credit",
+        { email: fundEmail, amount: Number(fundAmount) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setFundResult(
+        `✅ Funded ₦${fundAmount} to ${fundEmail}. New Balance: ₦${res.data.balance?.toLocaleString()}`
+      );
+      setFundEmail("");
+      setFundAmount("");
+      fetchUsers(); // Refresh user balances
+    } catch (err: any) {
+      const error = err.response?.data?.error || "Manual funding failed";
+      setFundResult(`❌ ${error}`);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchUsers();
@@ -121,7 +152,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen p-4 bg-gray-100">
-      <h2 className="text-2xl font-bold mb-4 text-center">🛠 Admin Dashboard</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">🛠 Admin Dashboard</h2>
 
       <div className="grid md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded shadow">
@@ -134,39 +165,46 @@ const AdminDashboard = () => {
           </Link>
           <Link
             to="/admin/users"
-            className="block text-blue-500 hover:underline"
+            className="block text-blue-500 hover:underline mb-2"
           >
             👤 Manage Users
           </Link>
         </div>
 
-        <div className="bg-white p-4 rounded shadow col-span-1 md:col-span-2">
-          <h3 className="font-semibold mb-2">📋 Users</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="p-2 text-left">Name</th>
-                  <th className="p-2 text-left">Email</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user._id} className="border-t">
-                    <td className="p-2">{user.name}</td>
-                    <td className="p-2">{user.email}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {users.length === 0 && (
-              <p className="text-gray-500 mt-2">No users found.</p>
-            )}
+        {/* Manual Funding */}
+        <div className="bg-white p-4 rounded shadow md:col-span-2">
+          <h3 className="font-semibold mb-2">💸 Manual Wallet Funding</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <input
+              type="email"
+              value={fundEmail}
+              onChange={(e) => setFundEmail(e.target.value)}
+              placeholder="User email"
+              className="border p-2 rounded w-full"
+            />
+            <input
+              type="number"
+              value={fundAmount}
+              onChange={(e) => setFundAmount(e.target.value)}
+              placeholder="Amount in Naira"
+              className="border p-2 rounded w-full"
+            />
+            <button
+              onClick={handleManualFund}
+              className="bg-green-600 text-white rounded px-4 py-2"
+            >
+              Fund Now
+            </button>
           </div>
+          {fundResult && (
+            <p className="mt-2 text-sm text-center text-gray-700">
+              {fundResult}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Add Category */}
+      {/* Category Management */}
       <div className="bg-white mt-6 p-4 rounded shadow max-w-md mx-auto">
         <h3 className="font-semibold mb-2">📂 Add New Category</h3>
         <div className="flex gap-2">
@@ -190,7 +228,37 @@ const AdminDashboard = () => {
         </ul>
       </div>
 
-      {/* Tabs */}
+      {/* Users List */}
+      <div className="bg-white mt-6 p-4 rounded shadow">
+        <h3 className="font-semibold mb-2">👥 All Users</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="p-2 text-left">Name</th>
+                <th className="p-2 text-left">Email</th>
+                <th className="p-2 text-left">Balance (₦)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user._id} className="border-t">
+                  <td className="p-2">{user.name}</td>
+                  <td className="p-2">{user.email}</td>
+                  <td className="p-2">
+                    {user.balance?.toLocaleString() || "0"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {users.length === 0 && (
+            <p className="text-gray-500 mt-2">No users found.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Product Filter Tabs */}
       <div className="mt-6 mb-2 flex gap-4 justify-center">
         <button
           onClick={() => setFilter("all")}
@@ -210,7 +278,7 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      {/* Product Cards */}
+      {/* Products */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {filteredProducts.map((product) => (
           <div
