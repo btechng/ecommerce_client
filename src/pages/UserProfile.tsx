@@ -133,6 +133,19 @@ export default function UserProfile() {
     }
   };
 
+  const refreshBalance = async () => {
+    if (!token || !userId) return;
+    try {
+      const res = await axios.get(`${apiBase}/api/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setBalance(res.data.balance || 0);
+      toast.success("✅ Balance refreshed");
+    } catch {
+      toast.error("❌ Failed to refresh balance");
+    }
+  };
+
   const handleFundWallet = async () => {
     try {
       const res = await axios.post(
@@ -311,8 +324,14 @@ export default function UserProfile() {
           {/* Wallet Tab */}
           {activeTab === "wallet" && (
             <div className="bg-white shadow rounded-lg p-6 mb-8">
-              <h2 className="text-xl font-bold mb-4">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 💼 Wallet Balance: ₦{balance.toLocaleString()}
+                <button
+                  onClick={refreshBalance}
+                  className="text-sm bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
+                >
+                  Refresh
+                </button>
               </h2>
 
               {verifying && (
@@ -345,20 +364,7 @@ export default function UserProfile() {
               {/* Airtime */}
               <div className="mb-6 border-t pt-6">
                 <h3 className="text-lg font-semibold mb-2">📞 Buy Airtime</h3>
-                <input
-                  type="text"
-                  placeholder="Network"
-                  value={airtimeNetwork}
-                  onChange={(e) => setAirtimeNetwork(e.target.value)}
-                  className="border p-2 w-full rounded"
-                />
-                {airtimeNetwork && networkLogos[airtimeNetwork] && (
-                  <img
-                    src={networkLogos[airtimeNetwork]}
-                    alt="Network Logo"
-                    className="h-6 mt-2"
-                  />
-                )}
+
                 <select
                   className="border p-2 w-full rounded"
                   value={airtimeNetwork}
@@ -370,6 +376,24 @@ export default function UserProfile() {
                   <option value="Airtel">Airtel</option>
                   <option value="9mobile">9mobile</option>
                 </select>
+
+                {airtimeNetwork && networkLogos[airtimeNetwork] && (
+                  <img
+                    src={networkLogos[airtimeNetwork]}
+                    alt="Network Logo"
+                    className="h-6 mt-2"
+                  />
+                )}
+
+                {/* Add this phone number input for airtime */}
+                <input
+                  type="text"
+                  placeholder="Phone Number"
+                  value={airtimePhone}
+                  onChange={(e) => setAirtimePhone(e.target.value)}
+                  className="border p-2 w-full rounded mt-2"
+                />
+
                 <input
                   type="number"
                   placeholder="Amount"
@@ -377,6 +401,7 @@ export default function UserProfile() {
                   onChange={(e) => setAirtimeAmount(Number(e.target.value))}
                   className="border p-2 w-full rounded mt-2"
                 />
+
                 <button
                   onClick={handleBuyAirtime}
                   className="bg-yellow-600 text-white px-4 py-2 rounded w-full mt-3"
