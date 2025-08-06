@@ -75,35 +75,20 @@ export default function UserProfile() {
   }, []);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!token) return;
+    const fetchAll = async () => {
+      if (!token || !userId) return;
       try {
-        const res = await axios.get(`${apiBase}/api/users/profile`, {
+        const res = await axios.get(`${apiBase}/api/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        const { name, email, balance, transactions } = res.data;
-
-        setUserName(name);
-        setEmail(email);
-        setNewName(name);
-        setNewEmail(email);
-        setBalance(balance || 0);
-        setTransactions(transactions || []);
-
-        // Optional: update localStorage
-        localStorage.setItem("username", name);
-        localStorage.setItem("email", email);
-        localStorage.setItem("balance", balance?.toString() || "0");
+        setBalance(res.data.balance || 0);
+        setTransactions(res.data.transactions || []);
       } catch (err) {
-        console.error("❌ Error fetching profile:", err);
-        toast.error("Failed to load profile");
-        navigate("/login"); // redirect if token is invalid
+        console.error("Error fetching wallet info", err);
       }
     };
-
-    fetchProfile();
-  }, [token]);
+    fetchAll();
+  }, [token, userId]);
 
   useEffect(() => {
     const query = new URLSearchParams(location.search);
@@ -137,11 +122,7 @@ export default function UserProfile() {
       if (res.data.success) {
         setBalance(res.data.balance);
         toast.success("✅ Wallet funded successfully");
-
-        // Remove ?reference=... from URL
-        const url = new URL(window.location.href);
-        url.searchParams.delete("reference");
-        window.history.replaceState({}, document.title, url.toString());
+        navigate(location.pathname);
       } else {
         toast.error("❌ Verification failed");
       }
