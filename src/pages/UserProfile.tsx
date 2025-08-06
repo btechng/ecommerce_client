@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Wallet, Eye } from "lucide-react";
+import { User, Wallet, Eye, Loader2 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -41,6 +41,10 @@ export default function UserProfile() {
   const [airtimePhone, setAirtimePhone] = useState("");
   const [airtimeAmount, setAirtimeAmount] = useState(0);
 
+  const [loadingBalance, setLoadingBalance] = useState(false);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [loadingDataPlans, setLoadingDataPlans] = useState(false);
+
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
   const apiBase = "https://ecommerce-server-or19.onrender.com";
@@ -61,6 +65,7 @@ export default function UserProfile() {
     setRecentlyViewed(viewed);
 
     const fetchBalance = async () => {
+      setLoadingBalance(true);
       try {
         const res = await axios.get(`${apiBase}/api/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -68,10 +73,13 @@ export default function UserProfile() {
         setBalance(res.data.balance || 0);
       } catch (err) {
         console.error("Failed to fetch balance", err);
+      } finally {
+        setLoadingBalance(false);
       }
     };
 
     const fetchTransactions = async () => {
+      setLoadingTransactions(true);
       try {
         const res = await axios.get(
           `${apiBase}/api/users/${userId}/transactions`,
@@ -82,10 +90,13 @@ export default function UserProfile() {
         setTransactions(res.data);
       } catch (err) {
         console.error("Failed to fetch transactions", err);
+      } finally {
+        setLoadingTransactions(false);
       }
     };
 
     const fetchDataPlans = async () => {
+      setLoadingDataPlans(true);
       try {
         const res = await axios.get(`${apiBase}/api/wallet/data-plans`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -93,18 +104,13 @@ export default function UserProfile() {
         setDataPlans(res.data);
       } catch (err) {
         console.error("Failed to fetch data plans", err);
+      } finally {
+        setLoadingDataPlans(false);
       }
     };
 
     if (token && userId) {
-      const cachedBalance = localStorage.getItem("balance");
-      if (cachedBalance) {
-        setBalance(Number(cachedBalance));
-        localStorage.removeItem("balance");
-      } else {
-        fetchBalance();
-      }
-
+      fetchBalance();
       fetchTransactions();
       fetchDataPlans();
     }
@@ -157,7 +163,9 @@ export default function UserProfile() {
           amount: airtimeAmount,
         },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       toast.success("✅ Airtime purchase successful");
@@ -221,72 +229,73 @@ export default function UserProfile() {
           exit={{ opacity: 0, x: -30 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Profile Tab */}
           {activeTab === "profile" && (
-            <div className="bg-white shadow rounded-lg p-6 mb-8">
-              {!editing ? (
-                <div>
-                  <p className="mb-2 text-lg">👤 Name: {userName}</p>
-                  <p className="mb-4 text-lg">📧 Email: {email}</p>
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="text-blue-600 underline"
-                  >
-                    ✏️ Edit Profile
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    className="border p-2 w-full rounded"
-                    placeholder="Name"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                  />
-                  <input
-                    type="email"
-                    className="border p-2 w-full rounded"
-                    placeholder="Email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                  />
-                  <div className="flex gap-3">
+            <div className="bg-white shadow rounded-lg p-6 mb-8 space-y-6">
+              <div>
+                {!editing ? (
+                  <>
+                    <p className="mb-2 text-lg">👤 Name: {userName}</p>
+                    <p className="mb-4 text-lg">📧 Email: {email}</p>
                     <button
-                      onClick={async () => {
-                        try {
-                          await axios.put(
-                            `${apiBase}/api/users/${userId}`,
-                            { name: newName, email: newEmail },
-                            { headers: { Authorization: `Bearer ${token}` } }
-                          );
-                          setUserName(newName);
-                          setEmail(newEmail);
-                          setEditing(false);
-                          localStorage.setItem("username", newName);
-                          localStorage.setItem("email", newEmail);
-                          toast.success("✅ Profile updated");
-                        } catch {
-                          toast.error("❌ Failed to update profile");
-                        }
-                      }}
-                      className="bg-green-600 text-white px-4 py-2 rounded"
+                      onClick={() => setEditing(true)}
+                      className="text-blue-600 underline"
                     >
-                      Save
+                      ✏️ Edit Profile
                     </button>
-                    <button
-                      onClick={() => setEditing(false)}
-                      className="text-gray-500"
-                    >
-                      Cancel
-                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      className="border p-2 w-full rounded"
+                      placeholder="Name"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                    />
+                    <input
+                      type="email"
+                      className="border p-2 w-full rounded"
+                      placeholder="Email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                    />
+                    <div className="flex gap-3">
+                      <button
+                        onClick={async () => {
+                          try {
+                            await axios.put(
+                              `${apiBase}/api/users/${userId}`,
+                              { name: newName, email: newEmail },
+                              { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            setUserName(newName);
+                            setEmail(newEmail);
+                            setEditing(false);
+                            localStorage.setItem("username", newName);
+                            localStorage.setItem("email", newEmail);
+                            toast.success("✅ Profile updated");
+                          } catch {
+                            toast.error("❌ Failed to update profile");
+                          }
+                        }}
+                        className="bg-green-600 text-white px-4 py-2 rounded"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditing(false)}
+                        className="text-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              <div className="mt-6 space-y-3">
-                <h2 className="text-xl font-semibold mb-1">
-                  🔐 Change Password
+              <div>
+                <h2 className="text-xl font-semibold mb-2">
+                  🔒 Change Password
                 </h2>
                 <input
                   type="password"
@@ -331,7 +340,7 @@ export default function UserProfile() {
                       toast.error("❌ Failed to update password");
                     }
                   }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  className="bg-blue-600 text-white px-4 py-2 rounded mt-3"
                 >
                   Update Password
                 </button>

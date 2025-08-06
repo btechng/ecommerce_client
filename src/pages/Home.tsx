@@ -154,7 +154,7 @@ export default function Home() {
                 "/register",
                 "/post-product",
                 "/post-job",
-                "/build-cv",
+                "/profile",
                 "/category/products",
               ].map((path, i) => (
                 <motion.div
@@ -177,7 +177,15 @@ export default function Home() {
                       " text-white px-4 py-2 rounded-md shadow hover:brightness-110"
                     }
                   >
-                    {["Sign Up", "🛒 Sell", "📢 Job", "📄 CV", "🛍️ Shop"][i]}
+                    {
+                      [
+                        "Sign Up",
+                        "🛒 Sell",
+                        "📢 Job",
+                        "📄 Aitime/Data",
+                        "🛍️ Shop",
+                      ][i]
+                    }
                   </Link>
                 </motion.div>
               ))}

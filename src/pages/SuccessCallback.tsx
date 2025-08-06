@@ -11,15 +11,19 @@ export default function SuccessCallback() {
   useEffect(() => {
     if (!reference) {
       toast.error("❌ No payment reference found.");
-      return navigate("/profile");
+      navigate("/profile");
+      return;
     }
 
     toast.success("✅ Payment completed! Wallet will be updated shortly.");
-    setTimeout(() => {
+
+    const timeout = setTimeout(() => {
       setLoading(false);
-      navigate("/profile");
+      navigate(`/profile?reference=${reference}`);
     }, 3000);
-  }, [reference]);
+
+    return () => clearTimeout(timeout);
+  }, [reference, navigate]);
 
   return (
     <div className="p-10 text-center flex flex-col items-center justify-center min-h-[60vh]">
