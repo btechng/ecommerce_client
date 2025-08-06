@@ -9,7 +9,7 @@ export default function SuccessCallback() {
   const reference = searchParams.get("reference");
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
-  const apiBase = "https://ecommerce-server-or19.onrender.com"; // your backend URL
+  const apiBase = "https://ecommerce-server-or19.onrender.com";
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -29,12 +29,15 @@ export default function SuccessCallback() {
           }
         );
 
+        console.log("✅ Verification Response:", res.data);
+
         if (res.data.success) {
-          toast.success("✅ Wallet funded successfully!");
-          // 💰 Store updated balance in localStorage
+          toast.success(res.data.message || "✅ Wallet funded successfully!");
           localStorage.setItem("balance", res.data.balance?.toString() || "0");
         } else {
-          toast.error("❌ Payment not verified as successful");
+          toast.error(
+            res.data.error || "❌ Payment not verified as successful"
+          );
         }
       } catch (err: any) {
         console.error(
@@ -43,14 +46,12 @@ export default function SuccessCallback() {
         );
         toast.error("❌ Payment verification failed.");
       } finally {
-        // Clean ?reference from URL
+        // Remove reference from URL
         const url = new URL(window.location.href);
         url.searchParams.delete("reference");
         window.history.replaceState({}, document.title, url.toString());
 
         setLoading(false);
-
-        // Navigate to profile
         setTimeout(() => navigate("/profile"), 2000);
       }
     };
