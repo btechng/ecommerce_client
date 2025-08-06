@@ -345,6 +345,11 @@ export default function UserProfile() {
                 💼 Wallet Balance: ₦{balance.toLocaleString()}
               </h2>
 
+              <p className="text-sm text-yellow-600 mb-4">
+                ⚠️ If your wallet hasn't updated yet, please wait a moment or
+                refresh the page.
+              </p>
+
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Fund Wallet</h3>
                 <div className="flex flex-col sm:flex-row items-center gap-4">

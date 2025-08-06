@@ -1,43 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
 
 export default function SuccessCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const reference = searchParams.get("reference");
-  const token = localStorage.getItem("token");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const verifyPayment = async () => {
-      if (!reference) {
-        toast.error("❌ No payment reference found.");
-        return navigate("/profile");
-      }
+    if (!reference) {
+      toast.error("❌ No payment reference found.");
+      return navigate("/profile");
+    }
 
-      try {
-        const res = await axios.get(
-          `https://ecommerce-server-or19.onrender.com/api/wallet/verify?reference=${reference}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        toast.success("✅ Wallet funded successfully!");
-      } catch (err: any) {
-        toast.error("❌ Wallet funding verification failed.");
-        console.error("Verification error:", err.response?.data || err.message);
-      } finally {
-        setLoading(false);
-        setTimeout(() => navigate("/profile"), 3000);
-      }
-    };
-
-    verifyPayment();
+    toast.success("✅ Payment completed! Wallet will be updated shortly.");
+    setTimeout(() => {
+      setLoading(false);
+      navigate("/profile");
+    }, 3000);
   }, [reference]);
 
   return (
@@ -71,7 +52,7 @@ export default function SuccessCallback() {
       ) : (
         <>
           <h1 className="text-2xl font-bold mb-2">🎉 Payment Successful!</h1>
-          <p>Redirecting you to your dashboard...</p>
+          <p>Your wallet will be updated shortly.</p>
         </>
       )}
     </div>
