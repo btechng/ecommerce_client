@@ -1,6 +1,8 @@
+// src/pages/UserProfile.tsx
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Wallet, Eye, Loader2 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
@@ -14,40 +16,48 @@ interface Product {
   category?: string;
 }
 
+interface DataPlan {
+  plan_id: string;
+  name: string;
+  price: number;
+  validity?: string;
+  network?: string;
+}
+
+const networkLogos: Record<string, string> = {
+  MTN: "https://ibb.co/zdDjBrm",
+  GLO: "https://ibb.co/HDMv3zRR",
+  Airtel: "https://ibb.co/4nYrRsFW",
+  "9mobile": "https://ibb.co/xSHL1Cbc",
+};
+
 export default function UserProfile() {
   const [userName, setUserName] = useState("User");
   const [email, setEmail] = useState("");
   const [editing, setEditing] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [passwordData, setPasswordData] = useState({
-    newPassword: "",
-    confirmPassword: "",
-  });
+  const [newPassword, setNewPassword] = useState("");
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [balance, setBalance] = useState(0);
-  const [amount, setAmount] = useState(0);
-  const [network, setNetwork] = useState("");
-  const [phone, setPhone] = useState("");
-  const [plan, setPlan] = useState("");
-  const [dataAmount, setDataAmount] = useState(0);
-  const [transactions, setTransactions] = useState([]);
-  const [dataPlans, setDataPlans] = useState<any[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedPlanDetails, setSelectedPlanDetails] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [verifying, setVerifying] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
 
+  const [amount, setAmount] = useState(0);
   const [airtimeNetwork, setAirtimeNetwork] = useState("");
   const [airtimePhone, setAirtimePhone] = useState("");
   const [airtimeAmount, setAirtimeAmount] = useState(0);
-
-  const [loadingBalance, setLoadingBalance] = useState(false);
-  const [loadingTransactions, setLoadingTransactions] = useState(false);
-  const [loadingDataPlans, setLoadingDataPlans] = useState(false);
+  const [dataNetwork, setDataNetwork] = useState("");
+  const [dataPhone, setDataPhone] = useState("");
+  const [dataPlans, setDataPlans] = useState<DataPlan[]>([]);
+  const [dataPlanId, setDataPlanId] = useState("");
 
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
   const apiBase = "https://ecommerce-server-or19.onrender.com";
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedName = localStorage.getItem("username");
@@ -60,61 +70,68 @@ export default function UserProfile() {
       setEmail(storedEmail);
       setNewEmail(storedEmail);
     }
-
     const viewed = JSON.parse(localStorage.getItem("recentlyViewed") || "[]");
     setRecentlyViewed(viewed);
+  }, []);
 
-    const fetchBalance = async () => {
-      setLoadingBalance(true);
+  useEffect(() => {
+    const fetchAll = async () => {
+      if (!token || !userId) return;
       try {
         const res = await axios.get(`${apiBase}/api/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setBalance(res.data.balance || 0);
+        setTransactions(res.data.transactions || []);
       } catch (err) {
-        console.error("Failed to fetch balance", err);
-      } finally {
-        setLoadingBalance(false);
+        console.error("Error fetching wallet info", err);
       }
     };
+    fetchAll();
+  }, [token, userId]);
 
-    const fetchTransactions = async () => {
-      setLoadingTransactions(true);
-      try {
-        const res = await axios.get(
-          `${apiBase}/api/users/${userId}/transactions`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setTransactions(res.data);
-      } catch (err) {
-        console.error("Failed to fetch transactions", err);
-      } finally {
-        setLoadingTransactions(false);
-      }
-    };
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const reference = query.get("reference");
+    if (reference) {
+      verifyPayment(reference);
+    }
+  }, [location.search]);
 
-    const fetchDataPlans = async () => {
-      setLoadingDataPlans(true);
+  useEffect(() => {
+    const fetchPlans = async () => {
       try {
         const res = await axios.get(`${apiBase}/api/wallet/data-plans`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setDataPlans(res.data);
       } catch (err) {
-        console.error("Failed to fetch data plans", err);
-      } finally {
-        setLoadingDataPlans(false);
+        console.error("Error fetching data plans", err);
       }
     };
+    fetchPlans();
+  }, [token]);
 
-    if (token && userId) {
-      fetchBalance();
-      fetchTransactions();
-      fetchDataPlans();
+  const verifyPayment = async (reference: string) => {
+    setVerifying(true);
+    try {
+      const res = await axios.get(
+        `${apiBase}/api/wallet/verify?reference=${reference}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.success) {
+        setBalance(res.data.balance);
+        toast.success("✅ Wallet funded successfully");
+        navigate(location.pathname);
+      } else {
+        toast.error("❌ Verification failed");
+      }
+    } catch {
+      toast.error("❌ Error verifying payment");
+    } finally {
+      setVerifying(false);
     }
-  }, []);
+  };
 
   const handleFundWallet = async () => {
     try {
@@ -124,36 +141,16 @@ export default function UserProfile() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       window.location.href = res.data.data.authorization_url;
-    } catch (err) {
+    } catch {
       toast.error("❌ Error initiating payment");
     }
   };
 
-  const confirmBuyData = async () => {
-    if (dataAmount > balance) {
-      toast.error("❌ Insufficient wallet balance");
+  const handleBuyAirtime = async () => {
+    if (!airtimeNetwork || !airtimePhone || !airtimeAmount) {
+      toast.error("❌ Fill all airtime fields");
       return;
     }
-    try {
-      await axios.post(
-        `${apiBase}/api/wallet/buy-data`,
-        { network, phone, plan, amount: dataAmount },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("✅ Data purchase successful");
-      setBalance((prev) => prev - dataAmount);
-      setShowModal(false);
-    } catch (err) {
-      toast.error("❌ Data purchase failed");
-    }
-  };
-
-  const confirmBuyAirtime = async () => {
-    if (airtimeAmount > balance) {
-      toast.error("❌ Insufficient wallet balance");
-      return;
-    }
-
     try {
       await axios.post(
         `${apiBase}/api/wallet/buy-airtime`,
@@ -162,27 +159,57 @@ export default function UserProfile() {
           phone: airtimePhone,
           amount: airtimeAmount,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("✅ Airtime purchase successful");
+      toast.success("✅ Airtime purchased successfully");
       setBalance((prev) => prev - airtimeAmount);
-      setAirtimeAmount(0);
-      setAirtimePhone("");
-      setAirtimeNetwork("");
-    } catch (err) {
+    } catch {
       toast.error("❌ Airtime purchase failed");
     }
   };
 
-  const handleBuyData = () => {
-    const selected = dataPlans.find((p) => p.plan_id === plan);
-    setSelectedPlanDetails(selected);
-    setDataAmount(Number(selected?.price) || 0);
-    setShowModal(true);
+  const handleBuyData = async () => {
+    if (!dataNetwork || !dataPhone || !dataPlanId) {
+      toast.error("❌ Fill all data fields");
+      return;
+    }
+    const selectedPlan = dataPlans.find((p) => p.plan_id === dataPlanId);
+    if (!selectedPlan) return;
+
+    try {
+      await axios.post(
+        `${apiBase}/api/wallet/buy-data`,
+        {
+          network: dataNetwork,
+          phone: dataPhone,
+          plan: dataPlanId,
+          amount: selectedPlan.price,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("✅ Data purchased successfully");
+      setBalance((prev) => prev - selectedPlan.price);
+    } catch {
+      toast.error("❌ Data purchase failed");
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      await axios.put(
+        `${apiBase}/api/users/${userId}`,
+        { name: newName, email: newEmail, password: newPassword },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUserName(newName);
+      setEmail(newEmail);
+      localStorage.setItem("username", newName);
+      localStorage.setItem("email", newEmail);
+      toast.success("✅ Profile updated");
+      setEditing(false);
+    } catch {
+      toast.error("❌ Failed to update profile");
+    }
   };
 
   const tabs = [
@@ -229,254 +256,225 @@ export default function UserProfile() {
           exit={{ opacity: 0, x: -30 }}
           transition={{ duration: 0.3 }}
         >
+          {/* Profile Tab */}
           {activeTab === "profile" && (
-            <div className="bg-white shadow rounded-lg p-6 mb-8 space-y-6">
-              <div>
-                {!editing ? (
-                  <>
-                    <p className="mb-2 text-lg">👤 Name: {userName}</p>
-                    <p className="mb-4 text-lg">📧 Email: {email}</p>
+            <div className="bg-white p-6 rounded shadow mb-6">
+              {!editing ? (
+                <>
+                  <p className="mb-2">👤 Name: {userName}</p>
+                  <p className="mb-2">📧 Email: {email}</p>
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="text-blue-600 underline"
+                  >
+                    ✏️ Edit Profile
+                  </button>
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <input
+                    className="border p-2 rounded w-full"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                  />
+                  <input
+                    className="border p-2 rounded w-full"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                  />
+                  <input
+                    type="password"
+                    className="border p-2 rounded w-full"
+                    placeholder="New Password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <div className="flex gap-3">
                     <button
-                      onClick={() => setEditing(true)}
-                      className="text-blue-600 underline"
+                      onClick={handleUpdateProfile}
+                      className="bg-green-600 text-white px-4 py-2 rounded"
                     >
-                      ✏️ Edit Profile
+                      Save
                     </button>
-                  </>
-                ) : (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      className="border p-2 w-full rounded"
-                      placeholder="Name"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                    />
-                    <input
-                      type="email"
-                      className="border p-2 w-full rounded"
-                      placeholder="Email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                    />
-                    <div className="flex gap-3">
-                      <button
-                        onClick={async () => {
-                          try {
-                            await axios.put(
-                              `${apiBase}/api/users/${userId}`,
-                              { name: newName, email: newEmail },
-                              { headers: { Authorization: `Bearer ${token}` } }
-                            );
-                            setUserName(newName);
-                            setEmail(newEmail);
-                            setEditing(false);
-                            localStorage.setItem("username", newName);
-                            localStorage.setItem("email", newEmail);
-                            toast.success("✅ Profile updated");
-                          } catch {
-                            toast.error("❌ Failed to update profile");
-                          }
-                        }}
-                        className="bg-green-600 text-white px-4 py-2 rounded"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditing(false)}
-                        className="text-gray-500"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setEditing(false)}
+                      className="text-gray-500"
+                    >
+                      Cancel
+                    </button>
                   </div>
-                )}
-              </div>
-
-              <div>
-                <h2 className="text-xl font-semibold mb-2">
-                  🔒 Change Password
-                </h2>
-                <input
-                  type="password"
-                  placeholder="New Password"
-                  className="border p-2 w-full rounded"
-                  value={passwordData.newPassword}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      newPassword: e.target.value,
-                    })
-                  }
-                />
-                <input
-                  type="password"
-                  placeholder="Confirm Password"
-                  className="border p-2 w-full rounded"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                />
-                <button
-                  onClick={async () => {
-                    const { newPassword, confirmPassword } = passwordData;
-                    if (newPassword !== confirmPassword) {
-                      toast.error("❌ Passwords do not match");
-                      return;
-                    }
-                    try {
-                      await axios.put(
-                        `${apiBase}/api/users/${userId}`,
-                        { password: newPassword },
-                        { headers: { Authorization: `Bearer ${token}` } }
-                      );
-                      setPasswordData({ newPassword: "", confirmPassword: "" });
-                      toast.success("✅ Password updated");
-                    } catch {
-                      toast.error("❌ Failed to update password");
-                    }
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded mt-3"
-                >
-                  Update Password
-                </button>
-              </div>
+                </div>
+              )}
             </div>
           )}
 
+          {/* Wallet Tab */}
           {activeTab === "wallet" && (
             <div className="bg-white shadow rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold mb-4">
+              <h2 className="text-xl font-bold mb-4">
                 💼 Wallet Balance: ₦{balance.toLocaleString()}
               </h2>
 
-              <p className="text-sm text-yellow-600 mb-4">
-                ⚠️ If your wallet hasn't updated yet, please wait a moment or
-                refresh the page.
-              </p>
+              {verifying && (
+                <div className="flex items-center gap-2 mb-4 text-blue-600">
+                  <Loader2 className="animate-spin w-4 h-4" /> Verifying
+                  payment...
+                </div>
+              )}
 
+              {/* Fund Wallet */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Fund Wallet</h3>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
+                <h3 className="text-lg font-semibold mb-2">💳 Fund Wallet</h3>
+                <div className="flex gap-2">
                   <input
                     type="number"
                     placeholder="Amount (₦)"
-                    className="border p-2 rounded w-full sm:w-1/2"
+                    className="border p-2 rounded w-full"
                     value={amount}
                     onChange={(e) => setAmount(Number(e.target.value))}
                   />
                   <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
                     onClick={handleFundWallet}
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
                   >
                     Fund Now
                   </button>
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">📡 Buy Data</h3>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Network"
-                    className="border p-2 w-full rounded"
-                    value={network}
-                    onChange={(e) => setNetwork(e.target.value)}
+              {/* Airtime */}
+              <div className="mb-6 border-t pt-6">
+                <h3 className="text-lg font-semibold mb-2">📞 Buy Airtime</h3>
+                <input
+                  type="text"
+                  placeholder="Network"
+                  value={airtimeNetwork}
+                  onChange={(e) => setAirtimeNetwork(e.target.value)}
+                  className="border p-2 w-full rounded"
+                />
+                {airtimeNetwork && networkLogos[airtimeNetwork] && (
+                  <img
+                    src={networkLogos[airtimeNetwork]}
+                    alt="Network Logo"
+                    className="h-6 mt-2"
                   />
-                  <input
-                    type="text"
-                    placeholder="Phone"
-                    className="border p-2 w-full rounded"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                  <select
-                    className="border p-2 w-full rounded"
-                    value={plan}
-                    onChange={(e) => setPlan(e.target.value)}
-                  >
-                    <option value="">Select Plan</option>
-                    {dataPlans.map((p) => (
-                      <option key={p.plan_id} value={p.plan_id}>
-                        {p.name} - ₦{p.price}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={handleBuyData}
-                    className="bg-green-600 text-white px-4 py-2 rounded w-full"
-                  >
-                    Buy Now
-                  </button>
-                </div>
+                )}
+                <select
+                  className="border p-2 w-full rounded"
+                  value={airtimeNetwork}
+                  onChange={(e) => setAirtimeNetwork(e.target.value)}
+                >
+                  <option value="">Select Network</option>
+                  <option value="MTN">MTN</option>
+                  <option value="GLO">GLO</option>
+                  <option value="Airtel">Airtel</option>
+                  <option value="9mobile">9mobile</option>
+                </select>
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  value={airtimeAmount}
+                  onChange={(e) => setAirtimeAmount(Number(e.target.value))}
+                  className="border p-2 w-full rounded mt-2"
+                />
+                <button
+                  onClick={handleBuyAirtime}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded w-full mt-3"
+                >
+                  Buy Airtime
+                </button>
               </div>
 
-              <div className="mt-8 bg-yellow-50 border border-yellow-300 rounded-lg p-4 shadow-sm">
-                <h3 className="text-lg font-bold text-yellow-800 mb-3">
-                  📞 Buy Airtime
-                </h3>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Network"
-                    className="border border-yellow-300 p-2 w-full rounded"
-                    value={airtimeNetwork}
-                    onChange={(e) => setAirtimeNetwork(e.target.value)}
+              {/* Data */}
+              <div className="mb-6 border-t pt-6">
+                <h3 className="text-lg font-semibold mb-2">📡 Buy Data</h3>
+                <select
+                  className="border p-2 w-full rounded"
+                  value={dataNetwork}
+                  onChange={(e) => setDataNetwork(e.target.value)}
+                >
+                  <option value="">Select Network</option>
+                  <option value="MTN">MTN</option>
+                  <option value="GLO">GLO</option>
+                  <option value="Airtel">Airtel</option>
+                  <option value="9mobile">9mobile</option>
+                </select>
+                {dataNetwork && networkLogos[dataNetwork] && (
+                  <img
+                    src={networkLogos[dataNetwork]}
+                    alt="Network Logo"
+                    className="h-6 mt-2"
                   />
-                  <input
-                    type="text"
-                    placeholder="Phone Number"
-                    className="border border-yellow-300 p-2 w-full rounded"
-                    value={airtimePhone}
-                    onChange={(e) => setAirtimePhone(e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Amount"
-                    className="border border-yellow-300 p-2 w-full rounded"
-                    value={airtimeAmount}
-                    onChange={(e) => setAirtimeAmount(Number(e.target.value))}
-                  />
-                  <button
-                    onClick={confirmBuyAirtime}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold px-4 py-2 rounded w-full transition-all"
-                  >
-                    🚀 Buy Airtime Now
-                  </button>
-                </div>
+                )}
+                <input
+                  type="text"
+                  placeholder="Phone Number"
+                  value={dataPhone}
+                  onChange={(e) => setDataPhone(e.target.value)}
+                  className="border p-2 w-full rounded mt-2"
+                />
+                <select
+                  className="border p-2 w-full rounded mt-2"
+                  value={dataPlanId}
+                  onChange={(e) => setDataPlanId(e.target.value)}
+                >
+                  <option value="">Select Plan</option>
+                  {dataPlans.map((plan) => (
+                    <option key={plan.plan_id} value={plan.plan_id}>
+                      {plan.name} - ₦{plan.price}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleBuyData}
+                  className="bg-green-600 text-white px-4 py-2 rounded w-full mt-3"
+                >
+                  Buy Data
+                </button>
+              </div>
+
+              {/* Transaction History */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">🧾 Transactions</h3>
+                {transactions.length === 0 ? (
+                  <p className="text-gray-500">No transactions yet.</p>
+                ) : (
+                  <ul className="divide-y">
+                    {transactions.map((txn, index) => (
+                      <li key={index} className="py-2 text-sm">
+                        {txn.type} - ₦{txn.amount} (
+                        {new Date(txn.date).toLocaleString()})
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           )}
 
+          {/* Recently Viewed */}
           {activeTab === "viewed" && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-3">🕵️ Recently Viewed</h2>
+            <div className="bg-white p-6 rounded shadow">
+              <h2 className="text-xl font-bold mb-4">🕵️ Recently Viewed</h2>
               {recentlyViewed.length === 0 ? (
-                <p className="text-gray-500">
-                  You haven't viewed any items yet.
-                </p>
+                <p className="text-gray-600">No items viewed yet.</p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {recentlyViewed.map((item) => (
                     <Link to={`/product/${item._id}`} key={item._id}>
-                      <div className="border rounded-xl p-3 bg-white shadow hover:shadow-md transition">
+                      <div className="border rounded p-3 hover:shadow">
                         {item.imageUrl &&
                           !item.category?.toLowerCase().includes("job") && (
                             <img
                               src={item.imageUrl}
                               alt={item.name}
-                              className="h-32 w-full object-cover rounded mb-2"
+                              className="w-full h-32 object-cover rounded mb-2"
                             />
                           )}
-                        <h3 className="text-md font-semibold truncate">
+                        <h3 className="font-semibold text-sm truncate">
                           {item.name}
                         </h3>
-                        <p className="text-sm text-gray-600 line-clamp-2">
+                        <p className="text-xs text-gray-600 line-clamp-2">
                           {item.description}
                         </p>
                       </div>
@@ -488,36 +486,6 @@ export default function UserProfile() {
           )}
         </motion.div>
       </AnimatePresence>
-
-      {showModal && selectedPlanDetails && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">
-              Confirm Data Purchase
-            </h2>
-            <p className="mb-2">Network: {network}</p>
-            <p className="mb-2">Plan: {selectedPlanDetails?.name}</p>
-            <p className="mb-2">Price: ₦{selectedPlanDetails?.price}</p>
-            <p className="mb-4">
-              Validity: {selectedPlanDetails?.validity || "N/A"}
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-green-600 text-white px-4 py-2 rounded"
-                onClick={confirmBuyData}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

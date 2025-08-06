@@ -1,29 +1,62 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 export default function SuccessCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const reference = searchParams.get("reference");
   const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("token");
+  const apiBase = "https://ecommerce-server-or19.onrender.com"; // your backend URL
 
   useEffect(() => {
-    if (!reference) {
-      toast.error("❌ No payment reference found.");
-      navigate("/profile");
-      return;
-    }
+    const verifyPayment = async () => {
+      if (!reference) {
+        toast.error("❌ No payment reference found.");
+        navigate("/profile");
+        return;
+      }
 
-    toast.success("✅ Payment completed! Wallet will be updated shortly.");
+      try {
+        const res = await axios.get(
+          `${apiBase}/api/wallet/verify?reference=${reference}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-    const timeout = setTimeout(() => {
-      setLoading(false);
-      navigate(`/profile?reference=${reference}`);
-    }, 3000);
+        if (res.data.success) {
+          toast.success("✅ Wallet funded successfully!");
+          // 💰 Store updated balance in localStorage
+          localStorage.setItem("balance", res.data.balance?.toString() || "0");
+        } else {
+          toast.error("❌ Payment not verified as successful");
+        }
+      } catch (err: any) {
+        console.error(
+          "❌ Verification error:",
+          err.response?.data || err.message
+        );
+        toast.error("❌ Payment verification failed.");
+      } finally {
+        // Clean ?reference from URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete("reference");
+        window.history.replaceState({}, document.title, url.toString());
 
-    return () => clearTimeout(timeout);
-  }, [reference, navigate]);
+        setLoading(false);
+
+        // Navigate to profile
+        setTimeout(() => navigate("/profile"), 2000);
+      }
+    };
+
+    verifyPayment();
+  }, [reference, token, navigate]);
 
   return (
     <div className="p-10 text-center flex flex-col items-center justify-center min-h-[60vh]">
@@ -55,8 +88,8 @@ export default function SuccessCallback() {
         </>
       ) : (
         <>
-          <h1 className="text-2xl font-bold mb-2">🎉 Payment Successful!</h1>
-          <p>Your wallet will be updated shortly.</p>
+          <h1 className="text-2xl font-bold mb-2">🎉 Payment Verified</h1>
+          <p>Redirecting to your profile...</p>
         </>
       )}
     </div>
