@@ -40,6 +40,24 @@ const AdminDashboard = () => {
   const [email, setEmail] = useState("");
   const [amount, setAmount] = useState("");
 
+  useEffect(() => {
+    const fetchPendingProducts = async () => {
+      try {
+        const res = await axios.get(
+          "https://ecommerce-server-or19.onrender.com/api/products/pending",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        console.log("Fetched pending products:", res.data); // ✅
+        setProducts(res.data);
+      } catch (err) {
+        console.error("Failed to fetch pending products", err);
+      }
+    };
+
+    fetchPendingProducts();
+  }, []);
   // Fetch wallet balance
   const fetchBalance = async () => {
     try {
@@ -186,7 +204,8 @@ const AdminDashboard = () => {
       {/* Manual Wallet Funding */}
       <div className="bg-white p-4 rounded shadow">
         <h2 className="text-xl font-bold mb-4">Fund User Wallet</h2>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-start md:items-center">
+          <input className="border p-2 rounded w-full md:w-1/3" />
           <input
             type="email"
             placeholder="User email"
@@ -218,49 +237,51 @@ const AdminDashboard = () => {
         {products.filter((p) => p.isApproved === false).length === 0 ? (
           <p>No pending products.</p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2">Image</th>
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Price</th>
-                <th className="px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products
-                .filter((p) => p.isApproved === false)
-                .map((product) => (
-                  <tr key={product._id}>
-                    <td className="px-4 py-2">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-12 w-12 rounded"
-                      />
-                    </td>
-                    <td className="px-4 py-2">{product.name}</td>
-                    <td className="px-4 py-2">₦{product.price}</td>
-                    <td className="px-4 py-2 space-x-2">
-                      <button
-                        onClick={() =>
-                          updateProductStatus(product._id, "approved")
-                        }
-                        className="bg-green-600 text-white px-3 py-1 rounded"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => deleteProduct(product._id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2">Image</th>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Price</th>
+                  <th className="px-4 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products
+                  .filter((p) => p.isApproved === false)
+                  .map((product) => (
+                    <tr key={product._id}>
+                      <td className="px-4 py-2">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-10 w-10 md:h-12 md:w-12 rounded object-cover"
+                        />
+                      </td>
+                      <td className="px-4 py-2">{product.name}</td>
+                      <td className="px-4 py-2">₦{product.price}</td>
+                      <td className="px-4 py-2 space-x-2">
+                        <button
+                          onClick={() =>
+                            updateProductStatus(product._id, "approved")
+                          }
+                          className="bg-green-600 text-white px-3 py-1 rounded"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => deleteProduct(product._id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -270,43 +291,45 @@ const AdminDashboard = () => {
         {requests.length === 0 ? (
           <p>No requests yet.</p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2">Type</th>
-                <th className="px-4 py-2">Network</th>
-                <th className="px-4 py-2">Phone</th>
-                <th className="px-4 py-2">Amount</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((req) => (
-                <tr key={req._id}>
-                  <td className="px-4 py-2">{req.type}</td>
-                  <td className="px-4 py-2">{req.network}</td>
-                  <td className="px-4 py-2">{req.phone}</td>
-                  <td className="px-4 py-2">₦{req.amount}</td>
-                  <td className="px-4 py-2">{req.status}</td>
-                  <td className="px-4 py-2 space-x-2">
-                    <button
-                      onClick={() => updateRequestStatus(req._id, "approved")}
-                      className="bg-green-500 text-white px-2 py-1 rounded"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => updateRequestStatus(req._id, "rejected")}
-                      className="bg-red-500 text-white px-2 py-1 rounded"
-                    >
-                      Reject
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2">Type</th>
+                  <th className="px-4 py-2">Network</th>
+                  <th className="px-4 py-2">Phone</th>
+                  <th className="px-4 py-2">Amount</th>
+                  <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {requests.map((req) => (
+                  <tr key={req._id}>
+                    <td className="px-4 py-2">{req.type}</td>
+                    <td className="px-4 py-2">{req.network}</td>
+                    <td className="px-4 py-2">{req.phone}</td>
+                    <td className="px-4 py-2">₦{req.amount}</td>
+                    <td className="px-4 py-2">{req.status}</td>
+                    <td className="px-4 py-2 space-x-2">
+                      <button
+                        onClick={() => updateRequestStatus(req._id, "approved")}
+                        className="bg-green-500 text-white px-2 py-1 rounded"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => updateRequestStatus(req._id, "rejected")}
+                        className="bg-red-500 text-white px-2 py-1 rounded"
+                      >
+                        Reject
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
