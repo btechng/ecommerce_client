@@ -9,13 +9,16 @@ interface Product {
   price: number;
   image: string;
   status: string;
+  isApproved: boolean; // ✅ Add this line
+  approvalDate?: string; // optional, for approved products
+  // any other fields like category, description, etc.
 }
 
 interface Request {
   _id: string;
   type: string;
   network: string;
-  phoneNumber: string;
+  phone: string;
   amount: number;
   status: string;
   createdAt: string;
@@ -65,11 +68,17 @@ const AdminDashboard = () => {
   const fetchRequests = async () => {
     try {
       const res = await axios.get(
-        "https://ecommerce-server-or19.onrender.com/api/requests"
+        "https://ecommerce-server-or19.onrender.com/api/wallet/requests",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
+      console.log("Fetched Requests:", res.data);
       setRequests(res.data);
     } catch (err) {
-      console.error("Error fetching requests", err);
+      console.error("❌ Error fetching requests:", err);
     }
   };
 
@@ -206,7 +215,7 @@ const AdminDashboard = () => {
         <h2 className="text-2xl font-bold mb-4">
           Pending Products for Approval
         </h2>
-        {products.filter((p) => p.status === "pending").length === 0 ? (
+        {products.filter((p) => p.isApproved === false).length === 0 ? (
           <p>No pending products.</p>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
@@ -220,7 +229,7 @@ const AdminDashboard = () => {
             </thead>
             <tbody>
               {products
-                .filter((p) => p.status === "pending")
+                .filter((p) => p.isApproved === false)
                 .map((product) => (
                   <tr key={product._id}>
                     <td className="px-4 py-2">
@@ -277,7 +286,7 @@ const AdminDashboard = () => {
                 <tr key={req._id}>
                   <td className="px-4 py-2">{req.type}</td>
                   <td className="px-4 py-2">{req.network}</td>
-                  <td className="px-4 py-2">{req.phoneNumber}</td>
+                  <td className="px-4 py-2">{req.phone}</td>
                   <td className="px-4 py-2">₦{req.amount}</td>
                   <td className="px-4 py-2">{req.status}</td>
                   <td className="px-4 py-2 space-x-2">

@@ -70,19 +70,25 @@ const PostProduct = () => {
 
     try {
       setLoading(true);
-      await axios.post(
+      console.log("📦 Submitting form:", form); // log form data
+      const response = await axios.post(
         "https://ecommerce-server-or19.onrender.com/api/products/post",
         {
           ...form,
           price: Number(form.price),
         },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
+
+      console.log("✅ Product submitted:", response.data);
       toast.success("Product submitted! Waiting for admin approval.");
       navigate("/");
     } catch (err: any) {
+      console.error("❌ Submit error:", err.response?.data || err.message);
       toast.error(err.response?.data?.error || "Submission failed");
     } finally {
       setLoading(false);
