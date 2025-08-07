@@ -173,7 +173,6 @@ export default function UserProfile() {
       await axios.post(
         `${apiBase}/api/wallet/request-airtime`,
         {
-          userId,
           network: airtimeNetwork,
           phone: airtimePhone,
           amount: airtimeAmount,
@@ -187,7 +186,8 @@ export default function UserProfile() {
       setAirtimePhone("");
       setAirtimeAmount(0);
       setAirtimeNetwork("");
-    } catch {
+    } catch (err: any) {
+      console.error("❌ Airtime error:", err);
       toast.error("❌ Failed to process airtime request");
     }
   };
