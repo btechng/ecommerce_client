@@ -150,7 +150,7 @@ const AdminDashboard = () => {
 
     try {
       await axios.post(
-        "https://ecommerce-server-or19.onrender.com/api/admin/manual-credit",
+        "https://ecommerce-server-or19.onrender.com/api/wallet/manual-credit",
         { email, amount: parseFloat(amount) },
         { headers: { Authorization: `Bearer ${token}` } }
       );
