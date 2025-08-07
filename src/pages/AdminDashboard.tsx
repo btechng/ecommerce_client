@@ -1,323 +1,334 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface Product {
   _id: string;
   name: string;
   price: number;
-  isApproved: boolean;
+  image: string;
+  status: string;
+}
+
+interface Request {
+  _id: string;
+  type: string;
+  network: string;
+  phoneNumber: string;
+  amount: number;
+  status: string;
+  createdAt: string;
 }
 
 interface User {
   _id: string;
-  name: string;
   email: string;
-  balance?: number;
-}
-
-interface Category {
-  _id: string;
   name: string;
+  walletBalance: number;
 }
 
 const AdminDashboard = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [newCategory, setNewCategory] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "pending">("all");
-
-  // Manual funding state
-  const [fundEmail, setFundEmail] = useState("");
-  const [fundAmount, setFundAmount] = useState("");
-  const [fundResult, setFundResult] = useState<string | null>(null);
-
   const token = localStorage.getItem("token");
+  const [balance, setBalance] = useState(0);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [email, setEmail] = useState("");
+  const [amount, setAmount] = useState("");
 
+  // Fetch wallet balance
+  const fetchBalance = async () => {
+    try {
+      const res = await axios.get(
+        "https://ecommerce-server-or19.onrender.com/api/admin/balance"
+      );
+      setBalance(res.data.balance);
+    } catch (err) {
+      console.error("Error fetching balance", err);
+    }
+  };
+
+  // Fetch products
   const fetchProducts = async () => {
     try {
       const res = await axios.get(
-        "https://ecommerce-server-or19.onrender.com/api/products/admin",
-        { headers: { Authorization: `Bearer ${token}` } }
+        "https://ecommerce-server-or19.onrender.com/api/products"
       );
       setProducts(res.data);
-    } catch {
-      alert("Failed to fetch products");
+    } catch (err) {
+      console.error("Error fetching products", err);
     }
   };
 
+  // Fetch requests
+  const fetchRequests = async () => {
+    try {
+      const res = await axios.get(
+        "https://ecommerce-server-or19.onrender.com/api/requests"
+      );
+      setRequests(res.data);
+    } catch (err) {
+      console.error("Error fetching requests", err);
+    }
+  };
+
+  // Fetch users
   const fetchUsers = async () => {
     try {
       const res = await axios.get(
-        "https://ecommerce-server-or19.onrender.com/api/users",
-        { headers: { Authorization: `Bearer ${token}` } }
+        "https://ecommerce-server-or19.onrender.com/api/users"
       );
       setUsers(res.data);
-    } catch {
-      console.error("Failed to load users");
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const res = await axios.get(
-        "https://ecommerce-server-or19.onrender.com/api/categories"
-      );
-      setCategories(res.data);
-    } catch {
-      console.error("Failed to load categories");
-    }
-  };
-
-  const handleAddCategory = async () => {
-    if (!newCategory.trim()) return alert("Category name required");
-    try {
-      const res = await axios.post(
-        "https://ecommerce-server-or19.onrender.com/api/categories",
-        { name: newCategory },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setCategories((prev) => [res.data, ...prev]);
-      setNewCategory("");
     } catch (err) {
-      alert("Failed to add category");
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await axios.delete(
-        `https://ecommerce-server-or19.onrender.com/api/products/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setProducts(products.filter((p) => p._id !== id));
-    } catch {
-      alert("Failed to delete product");
-    }
-  };
-
-  const handleApprove = async (id: string) => {
-    try {
-      await axios.put(
-        `https://ecommerce-server-or19.onrender.com/api/products/approve/${id}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setProducts((prev) =>
-        prev.map((p) => (p._id === id ? { ...p, isApproved: true } : p))
-      );
-      alert("✅ Product approved");
-    } catch {
-      alert("❌ Approval failed");
-    }
-  };
-
-  const handleManualFund = async () => {
-    if (!fundEmail || !fundAmount) {
-      alert("Email and amount are required");
-      return;
-    }
-
-    try {
-      const res = await axios.post(
-        "https://ecommerce-server-or19.onrender.com/api/wallet/manual-credit",
-        { email: fundEmail, amount: Number(fundAmount) },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setFundResult(
-        `✅ Funded ₦${fundAmount} to ${fundEmail}. New Balance: ₦${res.data.balance?.toLocaleString()}`
-      );
-      setFundEmail("");
-      setFundAmount("");
-      fetchUsers(); // Refresh user balances
-    } catch (err: any) {
-      const error = err.response?.data?.error || "Manual funding failed";
-      setFundResult(`❌ ${error}`);
+      console.error("Error fetching users", err);
     }
   };
 
   useEffect(() => {
+    fetchBalance();
     fetchProducts();
+    fetchRequests();
     fetchUsers();
-    fetchCategories();
-    setLoading(false);
   }, []);
 
-  const filteredProducts =
-    filter === "pending" ? products.filter((p) => !p.isApproved) : products;
+  // Approve/Reject request
+  const updateRequestStatus = async (requestId: string, status: string) => {
+    try {
+      await axios.put(
+        `https://ecommerce-server-or19.onrender.com/api/requests/${requestId}/status`,
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Request status updated");
+      fetchRequests();
+    } catch (err) {
+      console.error("Error updating request", err);
+      toast.error("Failed to update request");
+    }
+  };
 
-  if (loading) return <div className="p-4 text-center">Loading...</div>;
+  // Approve product
+  const updateProductStatus = async (productId: string, status: string) => {
+    try {
+      await axios.put(
+        `https://ecommerce-server-or19.onrender.com/api/products/${productId}/status`,
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Product approved");
+      fetchProducts();
+    } catch (err) {
+      console.error("Error updating product", err);
+      toast.error("Failed to update product");
+    }
+  };
+
+  // Delete product
+  const deleteProduct = async (productId: string) => {
+    try {
+      await axios.delete(
+        `https://ecommerce-server-or19.onrender.com/api/products/${productId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Product deleted");
+      fetchProducts();
+    } catch (err) {
+      console.error("Error deleting product", err);
+      toast.error("Failed to delete product");
+    }
+  };
+
+  // Manual fund
+  const handleManualFund = async () => {
+    if (!email || !amount) {
+      toast.error("Email and amount are required");
+      return;
+    }
+
+    try {
+      await axios.post(
+        "https://ecommerce-server-or19.onrender.com/api/admin/fund",
+        { email, amount: parseFloat(amount) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Wallet funded successfully");
+      setEmail("");
+      setAmount("");
+      fetchUsers();
+    } catch (err) {
+      console.error("Error funding wallet", err);
+      toast.error("Failed to fund wallet");
+    }
+  };
 
   return (
-    <div className="min-h-screen p-4 bg-gray-100">
-      <h2 className="text-2xl font-bold mb-6 text-center">🛠 Admin Dashboard</h2>
+    <div className="p-6 space-y-6">
+      <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
 
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold mb-2">Quick Actions</h3>
-          <Link
-            to="/admin/add-product"
-            className="block text-blue-500 hover:underline mb-2"
-          >
-            ➕ Add Product
-          </Link>
-          <Link
-            to="/admin/users"
-            className="block text-blue-500 hover:underline mb-2"
-          >
-            👤 Manage Users
-          </Link>
-        </div>
-
-        {/* Manual Funding */}
-        <div className="bg-white p-4 rounded shadow md:col-span-2">
-          <h3 className="font-semibold mb-2">💸 Manual Wallet Funding</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <input
-              type="email"
-              value={fundEmail}
-              onChange={(e) => setFundEmail(e.target.value)}
-              placeholder="User email"
-              className="border p-2 rounded w-full"
-            />
-            <input
-              type="number"
-              value={fundAmount}
-              onChange={(e) => setFundAmount(e.target.value)}
-              placeholder="Amount in Naira"
-              className="border p-2 rounded w-full"
-            />
-            <button
-              onClick={handleManualFund}
-              className="bg-green-600 text-white rounded px-4 py-2"
-            >
-              Fund Now
-            </button>
-          </div>
-          {fundResult && (
-            <p className="mt-2 text-sm text-center text-gray-700">
-              {fundResult}
-            </p>
-          )}
-        </div>
+      {/* Platform Balance */}
+      <div className="bg-gray-100 p-4 rounded">
+        <h2 className="text-xl font-semibold mb-2">Platform Balance</h2>
+        <p className="text-2xl font-bold">₦{balance.toLocaleString()}</p>
       </div>
 
-      {/* Category Management */}
-      <div className="bg-white mt-6 p-4 rounded shadow max-w-md mx-auto">
-        <h3 className="font-semibold mb-2">📂 Add New Category</h3>
-        <div className="flex gap-2">
+      {/* Manual Wallet Funding */}
+      <div className="bg-white p-4 rounded shadow">
+        <h2 className="text-xl font-bold mb-4">Fund User Wallet</h2>
+        <div className="flex gap-4 items-center">
           <input
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            placeholder="e.g. Electronics"
-            className="border p-2 w-full"
+            type="email"
+            placeholder="User email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border p-2 rounded w-1/3"
+          />
+          <input
+            type="number"
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="border p-2 rounded w-1/3"
           />
           <button
-            onClick={handleAddCategory}
-            className="bg-blue-600 text-white px-4 rounded"
+            onClick={handleManualFund}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
           >
-            Add
+            Fund Wallet
           </button>
         </div>
-        <ul className="mt-3 text-sm text-gray-700">
-          {categories.map((c) => (
-            <li key={c._id}>• {c.name}</li>
-          ))}
-        </ul>
       </div>
 
-      {/* Users List */}
-      <div className="bg-white mt-6 p-4 rounded shadow">
-        <h3 className="font-semibold mb-2">👥 All Users</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border">
-            <thead className="bg-gray-200">
+      {/* Pending Products Approval */}
+      <div className="bg-white shadow-md rounded p-4">
+        <h2 className="text-2xl font-bold mb-4">
+          Pending Products for Approval
+        </h2>
+        {products.filter((p) => p.status === "pending").length === 0 ? (
+          <p>No pending products.</p>
+        ) : (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="p-2 text-left">Name</th>
-                <th className="p-2 text-left">Email</th>
-                <th className="p-2 text-left">Balance (₦)</th>
+                <th className="px-4 py-2">Image</th>
+                <th className="px-4 py-2">Name</th>
+                <th className="px-4 py-2">Price</th>
+                <th className="px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user._id} className="border-t">
-                  <td className="p-2">{user.name}</td>
-                  <td className="p-2">{user.email}</td>
-                  <td className="p-2">
-                    {user.balance?.toLocaleString() || "0"}
+              {products
+                .filter((p) => p.status === "pending")
+                .map((product) => (
+                  <tr key={product._id}>
+                    <td className="px-4 py-2">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="h-12 w-12 rounded"
+                      />
+                    </td>
+                    <td className="px-4 py-2">{product.name}</td>
+                    <td className="px-4 py-2">₦{product.price}</td>
+                    <td className="px-4 py-2 space-x-2">
+                      <button
+                        onClick={() =>
+                          updateProductStatus(product._id, "approved")
+                        }
+                        className="bg-green-600 text-white px-3 py-1 rounded"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(product._id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Airtime/Data Requests */}
+      <div className="bg-white shadow-md rounded p-4">
+        <h2 className="text-2xl font-bold mb-4">Airtime & Data Requests</h2>
+        {requests.length === 0 ? (
+          <p>No requests yet.</p>
+        ) : (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-2">Type</th>
+                <th className="px-4 py-2">Network</th>
+                <th className="px-4 py-2">Phone</th>
+                <th className="px-4 py-2">Amount</th>
+                <th className="px-4 py-2">Status</th>
+                <th className="px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((req) => (
+                <tr key={req._id}>
+                  <td className="px-4 py-2">{req.type}</td>
+                  <td className="px-4 py-2">{req.network}</td>
+                  <td className="px-4 py-2">{req.phoneNumber}</td>
+                  <td className="px-4 py-2">₦{req.amount}</td>
+                  <td className="px-4 py-2">{req.status}</td>
+                  <td className="px-4 py-2 space-x-2">
+                    <button
+                      onClick={() => updateRequestStatus(req._id, "approved")}
+                      className="bg-green-500 text-white px-2 py-1 rounded"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => updateRequestStatus(req._id, "rejected")}
+                      className="bg-red-500 text-white px-2 py-1 rounded"
+                    >
+                      Reject
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {users.length === 0 && (
-            <p className="text-gray-500 mt-2">No users found.</p>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* Product Filter Tabs */}
-      <div className="mt-6 mb-2 flex gap-4 justify-center">
-        <button
-          onClick={() => setFilter("all")}
-          className={`px-4 py-1 rounded ${
-            filter === "all" ? "bg-blue-600 text-white" : "bg-gray-300"
-          }`}
-        >
-          All Products
-        </button>
-        <button
-          onClick={() => setFilter("pending")}
-          className={`px-4 py-1 rounded ${
-            filter === "pending" ? "bg-yellow-500 text-white" : "bg-gray-300"
-          }`}
-        >
-          Pending Approval
-        </button>
+      {/* Users Table */}
+      <div className="bg-white shadow-md rounded p-4">
+        <h2 className="text-2xl font-bold mb-4">Users</h2>
+        {users.length === 0 ? (
+          <p>No users yet.</p>
+        ) : (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-2">Email</th>
+                <th className="px-4 py-2">Name</th>
+                <th className="px-4 py-2">Wallet Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user._id}>
+                  <td className="px-4 py-2">{user.email}</td>
+                  <td className="px-4 py-2">{user.name}</td>
+                  <td className="px-4 py-2">₦{user.walletBalance}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      {/* Products */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {filteredProducts.map((product) => (
-          <div
-            key={product._id}
-            className="bg-white p-4 rounded shadow w-full overflow-hidden"
-          >
-            <h4 className="font-semibold">{product.name}</h4>
-            <p className="text-sm text-gray-700 mb-2">
-              ₦{product.price?.toLocaleString()}
-            </p>
-
-            {product.isApproved ? (
-              <span className="text-green-600 text-sm mb-2 block">
-                ✔️ Approved
-              </span>
-            ) : (
-              <button
-                onClick={() => handleApprove(product._id)}
-                className="text-blue-600 text-sm mb-2 block"
-              >
-                ✅ Approve
-              </button>
-            )}
-
-            <button
-              onClick={() => handleDelete(product._id)}
-              className="text-red-600 text-sm"
-            >
-              ❌ Delete
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {filteredProducts.length === 0 && (
-        <p className="text-center text-gray-500 mt-4">
-          No products to display.
-        </p>
-      )}
+      <ToastContainer />
     </div>
   );
 };

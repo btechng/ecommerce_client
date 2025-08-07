@@ -1,5 +1,4 @@
 // src/pages/UserProfile.tsx
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -164,20 +163,32 @@ export default function UserProfile() {
       toast.error("❌ Fill all airtime fields");
       return;
     }
+
+    if (airtimeAmount > balance) {
+      toast.error("❌ Insufficient wallet balance");
+      return;
+    }
+
     try {
       await axios.post(
-        `${apiBase}/api/wallet/buy-airtime`,
+        `${apiBase}/api/wallet/request-airtime`,
         {
+          userId,
           network: airtimeNetwork,
           phone: airtimePhone,
           amount: airtimeAmount,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("✅ Airtime purchased successfully");
+
       setBalance((prev) => prev - airtimeAmount);
+      toast.success("✅ Airtime request sent and wallet deducted");
+
+      setAirtimePhone("");
+      setAirtimeAmount(0);
+      setAirtimeNetwork("");
     } catch {
-      toast.error("❌ Airtime purchase failed");
+      toast.error("❌ Failed to process airtime request");
     }
   };
 
@@ -186,24 +197,40 @@ export default function UserProfile() {
       toast.error("❌ Fill all data fields");
       return;
     }
+
     const selectedPlan = dataPlans.find((p) => p.plan_id === dataPlanId);
-    if (!selectedPlan) return;
+    if (!selectedPlan) {
+      toast.error("❌ Invalid data plan");
+      return;
+    }
+
+    if (selectedPlan.price > balance) {
+      toast.error("❌ Insufficient wallet balance");
+      return;
+    }
 
     try {
       await axios.post(
-        `${apiBase}/api/wallet/buy-data`,
+        `${apiBase}/api/wallet/request-data`,
         {
+          userId,
           network: dataNetwork,
           phone: dataPhone,
-          plan: dataPlanId,
-          amount: selectedPlan.price,
+          plan: selectedPlan.name,
+          planId: selectedPlan.plan_id,
+          price: selectedPlan.price,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("✅ Data purchased successfully");
+
       setBalance((prev) => prev - selectedPlan.price);
+      toast.success("✅ Data request sent and wallet deducted");
+
+      setDataPhone("");
+      setDataPlanId("");
+      setDataNetwork("");
     } catch {
-      toast.error("❌ Data purchase failed");
+      toast.error("❌ Failed to process data request");
     }
   };
 
@@ -244,6 +271,7 @@ export default function UserProfile() {
       <ToastContainer />
       <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
 
+      {/* Tabs */}
       <div className="flex space-x-4 mb-6 border-b">
         {tabs.map((tab) => (
           <button
@@ -261,6 +289,7 @@ export default function UserProfile() {
         ))}
       </div>
 
+      {/* Tab content */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
