@@ -86,83 +86,141 @@ const AdminRequests: React.FC = () => {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h2>All Airtime/Data Requests</h2>
+      <h2>All Airtime</h2>
       <ToastContainer />
 
       {requests.length === 0 ? (
         <p>No requests found.</p>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "1rem",
-          }}
-        >
-          <thead>
-            <tr style={{ borderBottom: "2px solid #ccc" }}>
-              <th>Type</th>
-              <th>Network</th>
-              <th>Phone</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((req) => (
-              <tr key={req._id} style={{ borderBottom: "1px solid #eee" }}>
-                <td>{req.type}</td>
-                <td>{req.network}</td>
-                <td>{req.phone}</td>
-                <td>₦{req.amount}</td>
-                <td>
-                  <span style={getStatusStyle(req.status)}>
-                    {req.status.toUpperCase()}
-                  </span>
-                </td>
-                <td>{new Date(req.createdAt).toLocaleString()}</td>
-                <td>
-                  {req.status === "pending" && (
-                    <>
-                      <button
-                        onClick={() =>
-                          updateRequestStatus(req._id, "completed")
-                        }
-                        style={{
-                          backgroundColor: "#4CAF50",
-                          color: "white",
-                          border: "none",
-                          padding: "6px 12px",
-                          marginRight: "5px",
-                          cursor: "pointer",
-                          borderRadius: "5px",
-                        }}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => updateRequestStatus(req._id, "failed")}
-                        style={{
-                          backgroundColor: "#f44336",
-                          color: "white",
-                          border: "none",
-                          padding: "6px 12px",
-                          cursor: "pointer",
-                          borderRadius: "5px",
-                        }}
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
-                </td>
+        <div className="table-container">
+          <table className="responsive-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Network</th>
+                <th>Phone</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {requests.map((req) => (
+                <tr key={req._id}>
+                  <td data-label="Type">{req.type}</td>
+                  <td data-label="Network">{req.network}</td>
+                  <td data-label="Phone">{req.phone}</td>
+                  <td data-label="Amount">₦{req.amount}</td>
+                  <td data-label="Status">
+                    <span style={getStatusStyle(req.status)}>
+                      {req.status.toUpperCase()}
+                    </span>
+                  </td>
+                  <td data-label="Date">
+                    {new Date(req.createdAt).toLocaleString()}
+                  </td>
+                  <td data-label="Actions">
+                    {req.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() =>
+                            updateRequestStatus(req._id, "completed")
+                          }
+                          className="approve-btn"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => updateRequestStatus(req._id, "failed")}
+                          className="reject-btn"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
+      <style>
+        {`
+        .table-container {
+          width: 100%;
+          overflow-x: auto;
+        }
+        .responsive-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .responsive-table th,
+        .responsive-table td {
+          padding: 10px;
+          text-align: left;
+          border-bottom: 1px solid #eee;
+        }
+        .approve-btn {
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          margin-right: 5px;
+          cursor: pointer;
+          border-radius: 5px;
+        }
+        .reject-btn {
+          background-color: #f44336;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          cursor: pointer;
+          border-radius: 5px;
+        }
+        
+        /* Mobile view: turn table into cards */
+        @media (max-width: 768px) {
+          .responsive-table thead {
+            display: none;
+          }
+          .responsive-table,
+          .responsive-table tbody,
+          .responsive-table tr,
+          .responsive-table td {
+            display: block;
+            width: 100%;
+          }
+          .responsive-table tr {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+          }
+          .responsive-table td {
+            text-align: right;
+            padding-left: 50%;
+            position: relative;
+          }
+          .responsive-table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 10px;
+            width: 45%;
+            font-weight: bold;
+            text-align: left;
+          }
+          .approve-btn, .reject-btn {
+            width: 100%;
+            margin: 5px 0;
+          }
+        }
+        `}
+      </style>
     </div>
   );
 };

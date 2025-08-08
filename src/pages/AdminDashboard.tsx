@@ -221,51 +221,95 @@ const AdminDashboard = () => {
         {products.filter((p) => p.isApproved === false).length === 0 ? (
           <p>No pending products.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2">Image</th>
-                  <th className="px-4 py-2">Name</th>
-                  <th className="px-4 py-2">Price</th>
-                  <th className="px-4 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products
-                  .filter((p) => p.isApproved === false)
-                  .map((product) => (
-                    <tr key={product._id}>
-                      <td className="px-4 py-2">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="h-10 w-10 md:h-12 md:w-12 rounded object-cover"
-                        />
-                      </td>
-                      <td className="px-4 py-2">{product.name}</td>
-                      <td className="px-4 py-2">₦{product.price}</td>
-                      <td className="px-4 py-2 space-x-2">
-                        <button
-                          onClick={() =>
-                            updateProductStatus(product._id, "approved")
-                          }
-                          className="bg-green-600 text-white px-3 py-1 rounded"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => deleteProduct(product._id)}
-                          className="bg-red-600 text-white px-3 py-1 rounded"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2">Image</th>
+                    <th className="px-4 py-2">Name</th>
+                    <th className="px-4 py-2">Price</th>
+                    <th className="px-4 py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products
+                    .filter((p) => p.isApproved === false)
+                    .map((product) => (
+                      <tr key={product._id}>
+                        <td className="px-4 py-2">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="h-10 w-10 md:h-12 md:w-12 rounded object-cover"
+                          />
+                        </td>
+                        <td className="px-4 py-2">{product.name}</td>
+                        <td className="px-4 py-2">₦{product.price}</td>
+                        <td className="px-4 py-2 space-x-2">
+                          <button
+                            onClick={() =>
+                              updateProductStatus(product._id, "approved")
+                            }
+                            className="bg-green-600 text-white px-3 py-1 rounded"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => deleteProduct(product._id)}
+                            className="bg-red-600 text-white px-3 py-1 rounded"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="sm:hidden space-y-4">
+              {products
+                .filter((p) => p.isApproved === false)
+                .map((product) => (
+                  <div
+                    key={product._id}
+                    className="border rounded p-4 shadow-sm bg-gray-50"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="h-16 w-16 rounded object-cover"
+                      />
+                      <div>
+                        <p className="text-lg font-semibold">{product.name}</p>
+                        <p className="text-gray-700">₦{product.price}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() =>
+                          updateProductStatus(product._id, "approved")
+                        }
+                        className="bg-green-600 text-white px-3 py-1 rounded flex-1"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(product._id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded flex-1"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -275,27 +319,50 @@ const AdminDashboard = () => {
         {users.length === 0 ? (
           <p>No users yet.</p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2">Email</th>
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Wallet Balance</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Email</th>
+                    <th className="px-4 py-2 text-left">Name</th>
+                    <th className="px-4 py-2 text-left">Wallet Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2">{user.email}</td>
+                      <td className="px-4 py-2">{user.name}</td>
+                      <td className="px-4 py-2">₦{user.balance}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="sm:hidden space-y-4">
               {users.map((user) => (
-                <tr key={user._id}>
-                  <td className="px-4 py-2">{user.email}</td>
-                  <td className="px-4 py-2">{user.name}</td>
-                  <td className="px-4 py-2">₦{user.balance}</td>
-                </tr>
+                <div
+                  key={user._id}
+                  className="border rounded p-4 shadow-sm bg-gray-50"
+                >
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium break-words">{user.email}</p>
+
+                  <p className="mt-2 text-sm text-gray-500">Name</p>
+                  <p className="font-medium">{user.name}</p>
+
+                  <p className="mt-2 text-sm text-gray-500">Wallet Balance</p>
+                  <p className="font-medium">₦{user.balance}</p>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
-
       <ToastContainer />
     </div>
   );

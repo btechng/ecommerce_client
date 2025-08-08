@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       const res = await axios.post(
         "https://ecommerce-server-or19.onrender.com/api/auth/login",
@@ -43,53 +45,71 @@ const Login = () => {
           err.response?.data?.error ||
           "❌ Login failed"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow bg-white">
-      <h2 className="text-xl font-bold mb-4 text-center">Login</h2>
+    <div className="relative max-w-md mx-auto mt-10">
+      {/* Login Card */}
+      <div className="p-6 border rounded shadow bg-white relative">
+        <h2 className="text-xl font-bold mb-4 text-center">Login</h2>
 
-      <input
-        className="w-full border p-2 mb-3 rounded"
-        placeholder="Email"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <div className="relative mb-4">
         <input
-          className="w-full border p-2 pr-10 rounded"
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border p-2 mb-3 rounded"
+          placeholder="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
+
+        <div className="relative mb-4">
+          <input
+            className="w-full border p-2 pr-10 rounded"
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            className="absolute right-2 top-2 text-gray-600"
+            onClick={() => setShowPassword((prev) => !prev)}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
         <button
-          type="button"
-          className="absolute right-2 top-2 text-gray-600"
-          onClick={() => setShowPassword((prev) => !prev)}
+          onClick={handleLogin}
+          disabled={loading}
+          className={`w-full flex items-center justify-center gap-2 py-2 rounded transition ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed text-white"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }`}
         >
-          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          {loading && <Loader2 className="animate-spin" size={18} />}
+          {loading ? "Logging in, wait a sec..." : "Login"}
         </button>
+
+        <div className="text-center mt-4">
+          <button
+            onClick={() => navigate("/register")}
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Sign Up Here and Enjoy All Benefit
+          </button>
+        </div>
       </div>
 
-      <button
-        onClick={handleLogin}
-        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-      >
-        Login
-      </button>
-
-      <div className="text-center mt-4">
-        <button
-          onClick={() => navigate("/register")}
-          className="text-blue-600 hover:underline font-medium"
-        >
-          Sign Up Here and Enjoy All Benefit
-        </button>
-      </div>
+      {/* Overlay when loading */}
+      {loading && (
+        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center rounded">
+          <Loader2 className="animate-spin text-white" size={32} />
+        </div>
+      )}
     </div>
   );
 };
