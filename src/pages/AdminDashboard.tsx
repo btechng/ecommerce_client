@@ -82,24 +82,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Fetch requests
-  const fetchRequests = async () => {
-    try {
-      const res = await axios.get(
-        "https://ecommerce-server-or19.onrender.com/api/wallet/requests",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      console.log("Fetched Requests:", res.data);
-      setRequests(res.data);
-    } catch (err) {
-      console.error("❌ Error fetching requests:", err);
-    }
-  };
-
   // Fetch users
   const fetchUsers = async () => {
     try {
@@ -115,20 +97,19 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchBalance();
     fetchProducts();
-    fetchRequests();
+
     fetchUsers();
   }, []);
 
   // Approve/Reject request
   const updateRequestStatus = async (requestId: string, status: string) => {
     try {
-      await axios.put(
+      await axios.patch(
         `https://ecommerce-server-or19.onrender.com/api/requests/${requestId}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Request status updated");
-      fetchRequests();
     } catch (err) {
       console.error("Error updating request", err);
       toast.error("Failed to update request");
@@ -279,54 +260,6 @@ const AdminDashboard = () => {
                       </td>
                     </tr>
                   ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Airtime/Data Requests */}
-      <div className="bg-white shadow-md rounded p-4">
-        <h2 className="text-2xl font-bold mb-4">Airtime & Data Requests</h2>
-        {requests.length === 0 ? (
-          <p>No requests yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2">Type</th>
-                  <th className="px-4 py-2">Network</th>
-                  <th className="px-4 py-2">Phone</th>
-                  <th className="px-4 py-2">Amount</th>
-                  <th className="px-4 py-2">Status</th>
-                  <th className="px-4 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map((req) => (
-                  <tr key={req._id}>
-                    <td className="px-4 py-2">{req.type}</td>
-                    <td className="px-4 py-2">{req.network}</td>
-                    <td className="px-4 py-2">{req.phone}</td>
-                    <td className="px-4 py-2">₦{req.amount}</td>
-                    <td className="px-4 py-2">{req.status}</td>
-                    <td className="px-4 py-2 space-x-2">
-                      <button
-                        onClick={() => updateRequestStatus(req._id, "approved")}
-                        className="bg-green-500 text-white px-2 py-1 rounded"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => updateRequestStatus(req._id, "rejected")}
-                        className="bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        Reject
-                      </button>
-                    </td>
-                  </tr>
-                ))}
               </tbody>
             </table>
           </div>

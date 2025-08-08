@@ -35,6 +35,11 @@ const AdminLayout = () => {
       to: "/admin/data-requests",
       icon: <ClipboardList size={18} />,
     },
+    {
+      label: "Airtime Requests",
+      to: "/admin/requests",
+      icon: <ClipboardList size={18} />,
+    },
   ];
 
   return (

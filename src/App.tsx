@@ -43,6 +43,7 @@ import MyOrders from "./pages/MyOrders";
 import PostProduct from "./pages/PostProduct";
 import SuccessCallback from "./pages/SuccessCallback";
 import AdminDataRequests from "./pages/AdminDataRequests";
+import AdminRequests from "./pages/AdminRequests";
 
 const App = () => {
   return (
@@ -116,6 +117,7 @@ const App = () => {
           <Route path="edit/:id" element={<ProductEdit />} />
           <Route path="orders" element={<OrderList />} />
           <Route path="data-requests" element={<AdminDataRequests />} />
+          <Route path="requests" element={<AdminRequests />} />
           <Route path="users" element={<UserList />} />
         </Route>
       </Routes>
