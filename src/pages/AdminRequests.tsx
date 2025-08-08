@@ -27,7 +27,6 @@ const AdminRequests: React.FC = () => {
           },
         }
       );
-      console.log("Fetched Requests:", res.data);
       setRequests(res.data);
     } catch (err) {
       console.error("❌ Error fetching requests:", err);
@@ -38,14 +37,19 @@ const AdminRequests: React.FC = () => {
   const updateRequestStatus = async (requestId: string, status: string) => {
     try {
       await axios.patch(
-        `https://ecommerce-server-or19.onrender.com/api/admin/requests/${requestId}/status`,
+        `https://ecommerce-server-or19.onrender.com/api/wallet/requests/${requestId}/status`,
         { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
-      toast.success("Request status updated");
+      toast.success(`Request marked as ${status}`);
       fetchRequests();
     } catch (err) {
-      console.error("Error updating request", err);
+      console.error("❌ Error updating request:", err);
       toast.error("Failed to update request");
     }
   };
@@ -53,6 +57,32 @@ const AdminRequests: React.FC = () => {
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case "completed":
+        return {
+          backgroundColor: "#4CAF50",
+          color: "white",
+          padding: "4px 10px",
+          borderRadius: "8px",
+        };
+      case "failed":
+        return {
+          backgroundColor: "#f44336",
+          color: "white",
+          padding: "4px 10px",
+          borderRadius: "8px",
+        };
+      default:
+        return {
+          backgroundColor: "#ff9800",
+          color: "white",
+          padding: "4px 10px",
+          borderRadius: "8px",
+        };
+    }
+  };
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -87,36 +117,46 @@ const AdminRequests: React.FC = () => {
                 <td>{req.network}</td>
                 <td>{req.phone}</td>
                 <td>₦{req.amount}</td>
-                <td>{req.status}</td>
+                <td>
+                  <span style={getStatusStyle(req.status)}>
+                    {req.status.toUpperCase()}
+                  </span>
+                </td>
                 <td>{new Date(req.createdAt).toLocaleString()}</td>
                 <td>
-                  <button
-                    onClick={() => updateRequestStatus(req._id, "completed")}
-                    disabled={req.status === "completed"}
-                    style={{
-                      backgroundColor: "#4CAF50",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      marginRight: "5px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => updateRequestStatus(req._id, "failed")}
-                    disabled={req.status === "failed"}
-                    style={{
-                      backgroundColor: "#f44336",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Reject
-                  </button>
+                  {req.status === "pending" && (
+                    <>
+                      <button
+                        onClick={() =>
+                          updateRequestStatus(req._id, "completed")
+                        }
+                        style={{
+                          backgroundColor: "#4CAF50",
+                          color: "white",
+                          border: "none",
+                          padding: "6px 12px",
+                          marginRight: "5px",
+                          cursor: "pointer",
+                          borderRadius: "5px",
+                        }}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => updateRequestStatus(req._id, "failed")}
+                        style={{
+                          backgroundColor: "#f44336",
+                          color: "white",
+                          border: "none",
+                          padding: "6px 12px",
+                          cursor: "pointer",
+                          borderRadius: "5px",
+                        }}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
