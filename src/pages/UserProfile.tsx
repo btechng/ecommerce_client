@@ -50,6 +50,37 @@ export default function UserProfile() {
   const [dataNetwork, setDataNetwork] = useState("");
   const [dataPhone, setDataPhone] = useState("");
   const [dataPlans, setDataPlans] = useState<DataPlan[]>([]);
+  const manualDataPlans: Record<string, DataPlan[]> = {
+    MTN: [
+      { plan_id: "mtn_500mb", name: "500MB - 30days", price: 300 },
+      { plan_id: "mtn_1gb", name: "1GB - 30days", price: 500 },
+      { plan_id: "mtn_2gb", name: "2GB - 30days", price: 1000 },
+      { plan_id: "mtn_3gb", name: "3GB - 30days", price: 1500 },
+    ],
+    Airtel: [
+      { plan_id: "airtel_300mb", name: "300MB - 2days", price: 100 },
+      { plan_id: "airtel_600mb", name: "600MB - 2days", price: 200 },
+      { plan_id: "airtel_4gb", name: "4GB - 2days", price: 500 },
+      { plan_id: "airtel_3.5gb", name: "3.5GB - Weekly", price: 1200 },
+    ],
+    GLO: [
+      { plan_id: "glo_500mb", name: "500mb - 30days", price: 100 },
+      { plan_id: "glo_1gb", name: "1GB - 7days", price: 200 },
+      { plan_id: "glo_1gb", name: "1GB - 30days", price: 250 },
+      { plan_id: "glo_2gb", name: "2GB - 30days", price: 500 },
+    ],
+    "9mobile": [
+      { plan_id: "9mobile_500mb", name: "500mb - 30days", price: 100 },
+      { plan_id: "9mobile_1gb", name: "1GB - 30days", price: 250 },
+      { plan_id: "9mobile_3gb", name: "3GB - 30days", price: 1250 },
+    ],
+  };
+  useEffect(() => {
+    if (dataNetwork) {
+      setDataPlans(manualDataPlans[dataNetwork] || []);
+      setDataPlanId(""); // reset selection
+    }
+  }, [dataNetwork]);
   const [dataPlanId, setDataPlanId] = useState("");
 
   const token = localStorage.getItem("token");
@@ -96,20 +127,6 @@ export default function UserProfile() {
       verifyPayment(reference);
     }
   }, [location.search]);
-
-  useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        const res = await axios.get(`${apiBase}/api/wallet/data-plans`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setDataPlans(res.data);
-      } catch (err) {
-        console.error("Error fetching data plans", err);
-      }
-    };
-    fetchPlans();
-  }, [token]);
 
   const verifyPayment = async (reference: string) => {
     setVerifying(true);
@@ -210,7 +227,7 @@ export default function UserProfile() {
     }
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${apiBase}/api/wallet/request-data`,
         {
           userId,
@@ -223,14 +240,25 @@ export default function UserProfile() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setBalance((prev) => prev - selectedPlan.price);
-      toast.success("✅ Data request sent and wallet deducted");
+      if (response.data.message === "Data request submitted successfully") {
+        setBalance((prev) => prev - selectedPlan.price);
+        toast.success("✅ Data request sent and wallet deducted");
 
-      setDataPhone("");
-      setDataPlanId("");
-      setDataNetwork("");
-    } catch {
-      toast.error("❌ Failed to process data request");
+        // Reset fields
+        setDataPhone("");
+        setDataPlanId("");
+        setDataNetwork("");
+      } else {
+        toast.error("❌ Failed: " + (response.data.error || "Unknown error"));
+      }
+    } catch (err: any) {
+      console.error("❌ Error submitting data request:", err);
+
+      if (err.response?.data?.error) {
+        toast.error("❌ " + err.response.data.error);
+      } else {
+        toast.error("❌ Failed to process data request");
+      }
     }
   };
 

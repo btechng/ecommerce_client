@@ -30,6 +30,11 @@ const AdminLayout = () => {
     },
     { label: "Orders", to: "/admin/orders", icon: <ClipboardList size={18} /> },
     { label: "Users", to: "/admin/users", icon: <Users size={18} /> },
+    {
+      label: "Data Requests",
+      to: "/admin/data-requests",
+      icon: <ClipboardList size={18} />,
+    },
   ];
 
   return (

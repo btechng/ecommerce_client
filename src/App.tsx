@@ -42,6 +42,7 @@ import AdminLayout from "./pages/AdminLayout";
 import MyOrders from "./pages/MyOrders";
 import PostProduct from "./pages/PostProduct";
 import SuccessCallback from "./pages/SuccessCallback";
+import AdminDataRequests from "./pages/AdminDataRequests";
 
 const App = () => {
   return (
@@ -114,6 +115,7 @@ const App = () => {
           <Route path="add-product" element={<AddProduct />} />
           <Route path="edit/:id" element={<ProductEdit />} />
           <Route path="orders" element={<OrderList />} />
+          <Route path="data-requests" element={<AdminDataRequests />} />
           <Route path="users" element={<UserList />} />
         </Route>
       </Routes>
