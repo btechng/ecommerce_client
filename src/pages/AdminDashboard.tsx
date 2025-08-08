@@ -28,7 +28,7 @@ interface User {
   _id: string;
   email: string;
   name: string;
-  walletBalance: number;
+  balance: number;
 }
 
 const AdminDashboard = () => {
@@ -86,7 +86,10 @@ const AdminDashboard = () => {
   const fetchUsers = async () => {
     try {
       const res = await axios.get(
-        "https://ecommerce-server-or19.onrender.com/api/users"
+        "https://ecommerce-server-or19.onrender.com/api/users",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       setUsers(res.data);
     } catch (err) {
@@ -285,7 +288,7 @@ const AdminDashboard = () => {
                 <tr key={user._id}>
                   <td className="px-4 py-2">{user.email}</td>
                   <td className="px-4 py-2">{user.name}</td>
-                  <td className="px-4 py-2">₦{user.walletBalance}</td>
+                  <td className="px-4 py-2">₦{user.balance}</td>
                 </tr>
               ))}
             </tbody>

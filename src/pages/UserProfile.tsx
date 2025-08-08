@@ -6,6 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { User, Wallet, Eye, Loader2 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import mtnLogo from "../../src/images/mtn.png";
+import gloLogo from "../../src/images/glo.jpg";
+import airtelLogo from "../../src/images/airtel.png";
+import nineMobileLogo from "../../src/images/9mobile.png";
 
 interface Product {
   _id: string;
@@ -24,12 +28,11 @@ interface DataPlan {
 }
 
 const networkLogos: Record<string, string> = {
-  MTN: "https://ibb.co/zdDjBrm",
-  GLO: "https://ibb.co/HDMv3zRR",
-  Airtel: "https://ibb.co/4nYrRsFW",
-  "9mobile": "https://ibb.co/xSHL1Cbc",
+  MTN: mtnLogo,
+  GLO: gloLogo,
+  Airtel: airtelLogo,
+  "9mobile": nineMobileLogo,
 };
-
 export default function UserProfile() {
   const [userName, setUserName] = useState("User");
   const [email, setEmail] = useState("");
@@ -437,7 +440,7 @@ export default function UserProfile() {
                 {airtimeNetwork && networkLogos[airtimeNetwork] && (
                   <img
                     src={networkLogos[airtimeNetwork]}
-                    alt="Network Logo"
+                    alt=""
                     className="h-6 mt-2"
                   />
                 )}
@@ -484,7 +487,7 @@ export default function UserProfile() {
                 {dataNetwork && networkLogos[dataNetwork] && (
                   <img
                     src={networkLogos[dataNetwork]}
-                    alt="Network Logo"
+                    alt=""
                     className="h-6 mt-2"
                   />
                 )}
