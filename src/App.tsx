@@ -44,6 +44,7 @@ import PostProduct from "./pages/PostProduct";
 import SuccessCallback from "./pages/SuccessCallback";
 import AdminDataRequests from "./pages/AdminDataRequests";
 import AdminRequests from "./pages/AdminRequests";
+import TransactionsList from "./pages/TransactionsList";
 
 const App = () => {
   return (
@@ -119,6 +120,7 @@ const App = () => {
           <Route path="data-requests" element={<AdminDataRequests />} />
           <Route path="requests" element={<AdminRequests />} />
           <Route path="users" element={<UserList />} />
+          <Route path="transactions" element={<TransactionsList />} />
         </Route>
       </Routes>
 

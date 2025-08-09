@@ -40,6 +40,11 @@ const AdminLayout = () => {
       to: "/admin/requests",
       icon: <ClipboardList size={18} />,
     },
+    {
+      label: "Transactions",
+      to: "/admin/transactions",
+      icon: <ClipboardList size={18} />,
+    },
   ];
 
   return (

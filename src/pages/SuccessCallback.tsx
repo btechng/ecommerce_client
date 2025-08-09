@@ -15,13 +15,14 @@ export default function SuccessCallback() {
     const verifyPayment = async () => {
       if (!reference) {
         toast.error("❌ No payment reference found.");
-        navigate("/profile");
+        navigate("/");
         return;
       }
 
       try {
+        // Use /verify/:reference route, pass reference as param
         const res = await axios.get(
-          `${apiBase}/api/wallet/verify?reference=${reference}`,
+          `${apiBase}/api/wallet/verify/${reference}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -32,11 +33,15 @@ export default function SuccessCallback() {
         console.log("✅ Verification Response:", res.data);
 
         if (res.data.success) {
-          toast.success(res.data.message || "✅ Wallet funded successfully!");
-          localStorage.setItem("balance", res.data.balance?.toString() || "0");
+          toast.success("✅ Wallet funded successfully!");
+          // Store updated balance from backend response
+          localStorage.setItem(
+            "balance",
+            res.data.newBalance?.toString() || "0"
+          );
         } else {
           toast.error(
-            res.data.error || "❌ Payment not verified as successful"
+            res.data.message || "❌ Payment not verified as successful"
           );
         }
       } catch (err: any) {
@@ -46,13 +51,13 @@ export default function SuccessCallback() {
         );
         toast.error("❌ Payment verification failed.");
       } finally {
-        // Remove reference from URL
+        // Remove reference from URL for cleaner UX
         const url = new URL(window.location.href);
         url.searchParams.delete("reference");
         window.history.replaceState({}, document.title, url.toString());
 
         setLoading(false);
-        setTimeout(() => navigate("/profile"), 2000);
+        setTimeout(() => navigate("/"), 2000); // Redirect to home page here
       }
     };
 
@@ -90,7 +95,7 @@ export default function SuccessCallback() {
       ) : (
         <>
           <h1 className="text-2xl font-bold mb-2">🎉 Payment Verified</h1>
-          <p>Redirecting to your profile...</p>
+          <p>Redirecting to your home page...</p>
         </>
       )}
     </div>
