@@ -159,9 +159,9 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* ✅ Mobile Toggle */}
+          {/* ✅ Mobile Toggle - Now Blue */}
           <button
-            className="md:hidden text-white"
+            className="md:hidden text-blue-500"
             onClick={() => setMenuOpen(true)}
           >
             <Menu className="w-6 h-6" />
@@ -212,7 +212,7 @@ const Navbar = () => {
               onClick={() => setMenuOpen(false)}
             />
             <motion.div
-              className="fixed top-0 left-0 w-64 h-full bg-black z-50 shadow-lg p-4 space-y-4"
+              className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg p-4 space-y-4"
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}
@@ -220,7 +220,7 @@ const Navbar = () => {
             >
               <button
                 onClick={() => setMenuOpen(false)}
-                className="text-gray-700 mb-4"
+                className="text-blue-500 mb-4"
               >
                 <X className="w-6 h-6" />
               </button>
