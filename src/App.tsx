@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import PrivateRoute from "./components/PrivateRoute";
+import GA4Tracker from "./components/GA4Tracker";
 
 // Public Pages
 import Home from "./pages/Home";
@@ -50,6 +51,7 @@ const App = () => {
   return (
     <>
       <Navbar />
+      <GA4Tracker />
 
       <Routes>
         {/* 🔓 Public Pages */}

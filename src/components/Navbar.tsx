@@ -291,6 +291,41 @@ const Navbar = () => {
                   >
                     Register
                   </Link>
+                  <Link
+                    to="/about-us"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-gray-800"
+                  >
+                    About Us
+                  </Link>
+                  <Link
+                    to="/contact-us"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-gray-800"
+                  >
+                    Contact Us
+                  </Link>
+                  <Link
+                    to="/disclaimer"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-gray-800"
+                  >
+                    Disclaimer
+                  </Link>
+                  <Link
+                    to="/privacy-policy"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-gray-800"
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    to="/terms"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-gray-800"
+                  >
+                    Terms & Condition
+                  </Link>
                 </>
               ) : (
                 <>
