@@ -212,7 +212,7 @@ const Navbar = () => {
               onClick={() => setMenuOpen(false)}
             />
             <motion.div
-              className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg p-4 space-y-4"
+              className="fixed top-0 left-0 w-64 h-full bg-black z-50 shadow-lg p-4 space-y-4"
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}
@@ -274,6 +274,41 @@ const Navbar = () => {
               >
                 🏆 Leaderboard
               </Link>
+              <Link
+                to="/about-us"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                About Us
+              </Link>
+              <Link
+                to="/contact-us"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                Contact Us
+              </Link>
+              <Link
+                to="/disclaimer"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                Disclaimer
+              </Link>
+              <Link
+                to="/privacy-policy"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                to="/terms"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                Terms & Condition
+              </Link>
 
               {!token ? (
                 <>
@@ -290,41 +325,6 @@ const Navbar = () => {
                     className="block text-gray-800"
                   >
                     Register
-                  </Link>
-                  <Link
-                    to="/about-us"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-gray-800"
-                  >
-                    About Us
-                  </Link>
-                  <Link
-                    to="/contact-us"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-gray-800"
-                  >
-                    Contact Us
-                  </Link>
-                  <Link
-                    to="/disclaimer"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-gray-800"
-                  >
-                    Disclaimer
-                  </Link>
-                  <Link
-                    to="/privacy-policy"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-gray-800"
-                  >
-                    Privacy Policy
-                  </Link>
-                  <Link
-                    to="/terms"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-gray-800"
-                  >
-                    Terms & Condition
                   </Link>
                 </>
               ) : (
