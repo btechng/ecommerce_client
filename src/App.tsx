@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
+import DefaultSEO from "./components/DefaultSEO";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import PrivateRoute from "./components/PrivateRoute";
@@ -50,6 +51,7 @@ import TransactionsList from "./pages/TransactionsList";
 const App = () => {
   return (
     <>
+      <DefaultSEO />
       <Navbar />
       <GA4Tracker />
 
