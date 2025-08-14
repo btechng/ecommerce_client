@@ -54,6 +54,83 @@
       gtag("js", new Date());
       gtag("config", "G-XN985YQBJM");
     </script>
+
+    <!-- JSON-LD Structured Data for SEO -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "Taskncart",
+            "url": "https://taskncart.shop",
+            "logo": "https://taskncart.shop/taskcart.png",
+            "sameAs": [
+              "https://www.facebook.com/taskncart",
+              "https://www.instagram.com/taskncart",
+              "https://www.linkedin.com/company/taskncart"
+            ],
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+234-814-849-4924",
+              "contactType": "Customer Service",
+              "areaServed": "NG",
+              "availableLanguage": ["English"]
+            }
+          },
+          {
+            "@type": "WebSite",
+            "url": "https://taskncart.shop",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://taskncart.shop/search?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://taskncart.shop" },
+              { "@type": "ListItem", "position": 2, "name": "Portfolio", "item": "https://taskncart.shop/" },
+              { "@type": "ListItem", "position": 3, "name": "Contact", "item": "https://taskncart.shop/contact-us" }
+            ]
+          },
+          {
+            "@type": "ItemList",
+            "name": "Portfolio Projects",
+            "itemListElement": [
+              {
+                "@type": "CreativeWork",
+                "position": 1,
+                "name": "E-commerce Website for Fashion Store",
+                "description": "A full-featured online store with payment integration.",
+                "url": https://taskncart.shop/category/fashion"
+              },
+              {
+                "@type": "CreativeWork",
+                "position": 2,
+                "name": "Grocery Delivery Platform",
+                "description": "An online grocery ordering and delivery platform.",
+                "url": "https://taskncart.shop/category/kitchenwares"
+              },
+              {
+                "@type": "CreativeWork",
+                "position": 3,
+                "name": "Educational E-learning Platform",
+                "description": "An e-learning site with quizzes and video lessons.",
+                "url": "https://taskncart.shop/"
+              }
+            ]
+          },
+          {
+            "@type": "ContactPage",
+            "url": "https://taskncart.shop/contact-us",
+            "name": "Contact Taskncart",
+            "description": "Get in touch with us for inquiries, collaborations, or support."
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
