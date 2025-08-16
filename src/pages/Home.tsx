@@ -5,6 +5,8 @@ import { motion, useInView } from "framer-motion";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import TriviaGame from "../components/TriviaGame";
+import { io, Socket } from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
 import HeroImage from "../images/1000359737.jpg";
 import LogoImage from "../images/1000359731.jpg";
 import ButtonBackground from "../images/1000359737.jpg";
@@ -22,6 +24,22 @@ interface Product {
 interface LeaderboardEntry {
   name: string;
   score: number;
+}
+
+interface SocialPost {
+  _id: string;
+  author: { username: string; avatarUrl?: string; _id: string };
+  title: string;
+  content: string;
+  imageUrl?: string;
+  likes: string[];
+  comments: { _id: string; author: { username: string }; content: string }[];
+}
+
+interface User {
+  _id: string;
+  username: string;
+  avatarUrl?: string;
 }
 
 const heroText = "Find Products and Job Opportunities on One Platform";
@@ -52,6 +70,9 @@ const buttonStagger = {
 };
 
 export default function Home() {
+  const { user } = useAuth();
+  const token = localStorage.getItem("socialToken");
+
   const [products, setProducts] = useState<Product[]>([]);
   const [jobs, setJobs] = useState<Product[]>([]);
   const [searchJobs, setSearchJobs] = useState("");
@@ -61,10 +82,24 @@ export default function Home() {
   const [showTrivia, setShowTrivia] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
+  // Social feed
+  const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
+  const [commentText, setCommentText] = useState<Record<string, string>>({});
+  const [chatUsers, setChatUsers] = useState<User[]>([]);
+  const [activeChat, setActiveChat] = useState<User | null>(null);
+  const [messages, setMessages] = useState<
+    { _id: string; from: string; to: string; content: string }[]
+  >([]);
+  const [text, setText] = useState("");
+  const socketRef = useRef<Socket | null>(null);
+
   const ctaRef = useRef(null);
   const isInView = useInView(ctaRef, { once: true });
 
   useEffect(() => {
+    // Load products & jobs
     axios
       .get("https://ecommerce-server-or19.onrender.com/api/products")
       .then((res) => {
@@ -81,16 +116,45 @@ export default function Home() {
       .catch(() => alert("Failed to load items"))
       .finally(() => setLoading(false));
 
+    // Load Trivia leaderboard
+    axios
+      .get("https://ecommerce-server-or19.onrender.com/api/trivia/leaderboard")
+      .then((res) => setLeaderboard(res.data.slice(0, 5)))
+      .catch(() => console.warn("Failed to fetch leaderboard"));
+
     toast.info("🧠 Test Your Brain with Trivia Questions Below", {
       position: "top-center",
       autoClose: 4000,
     });
 
+    // Load social feed
+    if (!token) return;
+    const socket = io("https://social-blog-server-6g7j.onrender.com", {
+      auth: { token },
+    });
+    socketRef.current = socket;
+
+    // Fetch initial social posts
     axios
-      .get("https://ecommerce-server-or19.onrender.com/api/trivia/leaderboard")
-      .then((res) => setLeaderboard(res.data.slice(0, 5)))
-      .catch(() => console.warn("Failed to fetch leaderboard"));
-  }, []);
+      .get("https://social-blog-server-6g7j.onrender.com/api/posts", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setSocialPosts(res.data.data || []))
+      .catch(console.error);
+
+    // Join user room for real-time updates
+    if (user) socket.emit("join", user._id);
+
+    // Listen for new posts
+    socket.on("post:new", (post: SocialPost) => {
+      setSocialPosts((prev) => [post, ...prev]);
+    });
+
+    // Cleanup
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, token]);
 
   const filteredJobs = jobs
     .filter(
@@ -107,6 +171,61 @@ export default function Home() {
         p.description.toLowerCase().includes(searchProducts.toLowerCase())
     )
     .slice(0, viewAllProducts ? undefined : 12);
+
+  // Social feed actions
+  const handlePost = async () => {
+    if (!newTitle || !newContent || !token) return;
+    try {
+      const res = await axios.post(
+        "https://ecommerce-server-or19.onrender.com/api/posts",
+        { title: newTitle, content: newContent },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      socketRef.current?.emit("post:new", res.data);
+      setNewTitle("");
+      setNewContent("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleLike = async (post: SocialPost) => {
+    if (!token) return;
+    const res = await axios.post(
+      `https://ecommerce-server-or19.onrender.com/api/posts/${post._id}/like`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setSocialPosts((prev) =>
+      prev.map((p) => (p._id === post._id ? res.data : p))
+    );
+  };
+
+  const handleComment = async (postId: string) => {
+    if (!token || !commentText[postId]?.trim()) return;
+    const res = await axios.post(
+      `https://ecommerce-server-or19.onrender.com/api/posts/${postId}/comment`,
+      { content: commentText[postId] },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setSocialPosts((prev) =>
+      prev.map((p) =>
+        p._id === postId ? { ...p, comments: [...p.comments, res.data] } : p
+      )
+    );
+    setCommentText({ ...commentText, [postId]: "" });
+  };
+
+  const sendMessage = async () => {
+    if (!text.trim() || !activeChat || !token) return;
+    const res = await axios.post(
+      `/chat/${activeChat._id}`,
+      { content: text },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setMessages((prev) => [...prev, res.data]);
+    setText("");
+  };
 
   return (
     <div
@@ -367,6 +486,70 @@ export default function Home() {
                   View Full Leaderboard →
                 </Link>
               </div>
+            </div>
+          )}
+        </div>
+        {/* Social Feed Section */}
+        <div className="p-4 max-w-6xl mx-auto mt-10">
+          <h2 className="text-white text-2xl font-bold mb-4">📢 Social Feed</h2>
+
+          {/* Add Post Link */}
+          <div className="mb-4">
+            <Link
+              to="/social-dashboard"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+            >
+              ➕ Add a Post
+            </Link>
+          </div>
+
+          {socialPosts.length === 0 ? (
+            <p className="text-white">No posts yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {socialPosts.map((post) => (
+                <div
+                  key={post._id}
+                  className="bg-white rounded-xl shadow-md p-4 flex flex-col"
+                >
+                  {/* Post Author */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <img
+                      src={post.author.avatarUrl || "https://placehold.co/32"}
+                      alt={post.author.username}
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <strong>{post.author.username}</strong>
+                  </div>
+
+                  {/* Post Content */}
+                  <h3 className="font-semibold">{post.title}</h3>
+                  {post.imageUrl && (
+                    <img
+                      src={post.imageUrl}
+                      alt={post.title}
+                      className="w-full h-40 object-cover rounded-lg my-2"
+                    />
+                  )}
+                  <div
+                    className="text-gray-700 mb-2 line-clamp-3"
+                    dangerouslySetInnerHTML={{ __html: post.content }}
+                  />
+
+                  {/* Likes & Comments */}
+                  <div className="flex justify-between items-center mt-auto">
+                    <span className="text-red-500 font-semibold">
+                      ❤ {post.likes?.length || 0}
+                    </span>
+                    <Link
+                      to={`/social-post/${post._id}`}
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      💬 {post.comments?.length || 0} Comments
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

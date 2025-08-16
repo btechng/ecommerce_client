@@ -275,6 +275,13 @@ const Navbar = () => {
                 🏆 Leaderboard
               </Link>
               <Link
+                to="/social-dashboard"
+                onClick={() => setMenuOpen(false)}
+                className="block text-gray-800"
+              >
+                Lets Socialize
+              </Link>
+              <Link
                 to="/about-us"
                 onClick={() => setMenuOpen(false)}
                 className="block text-gray-800"

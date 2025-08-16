@@ -47,6 +47,7 @@ import SuccessCallback from "./pages/SuccessCallback";
 import AdminDataRequests from "./pages/AdminDataRequests";
 import AdminRequests from "./pages/AdminRequests";
 import TransactionsList from "./pages/TransactionsList";
+import SocialDashboard from "./pages/SocialDashboard";
 
 const App = () => {
   return (
@@ -73,6 +74,7 @@ const App = () => {
         <Route path="/my-orders" element={<MyOrders />} />
         <Route path="/post-product" element={<PostProduct />} />
         <Route path="/wallet/callback" element={<SuccessCallback />} />
+        <Route path="/social-dashboard" element={<SocialDashboard />} />
 
         {/* 📄 Static Info */}
         <Route path="/about-us" element={<AboutUs />} />
