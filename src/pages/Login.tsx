@@ -68,7 +68,7 @@ const Login: React.FC = () => {
       localStorage.setItem("socialToken", socialToken);
 
       alert("✅ Login successful!");
-      navigate(user.role === "admin" ? "/admin" : "/social-blog");
+      navigate(user.role === "admin" ? "/admin" : "/");
     } catch (err: any) {
       console.error(err);
       alert(err.response?.data?.message || "❌ Login failed");
