@@ -35,7 +35,7 @@ interface Message {
 }
 
 const SocialDashboard: React.FC = () => {
-  const { user, authLoading } = useAuth();
+  const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
@@ -52,30 +52,6 @@ const SocialDashboard: React.FC = () => {
   const token = localStorage.getItem("token");
 
   // Load posts & users
-
-  if (authLoading) {
-    return <p className="text-center">Loading...</p>;
-  }
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen text-center">
-        <h2 className="text-xl font-bold mb-4">
-          Please login or create an account to access the social dashboard.
-        </h2>
-        <div className="flex gap-4">
-          <a href="/login" className="px-4 py-2 bg-blue-600 text-white rounded">
-            Login
-          </a>
-          <a
-            href="/register"
-            className="px-4 py-2 bg-gray-600 text-white rounded"
-          >
-            Register
-          </a>
-        </div>
-      </div>
-    );
-  }
   const loadPosts = async () => {
     if (!token) return;
     try {
