@@ -22,7 +22,7 @@ interface Post {
   content: string;
   imageUrl?: string;
   likes: string[];
-  comments: Comment[];
+  comments?: Comment[];
 }
 
 interface Message {
@@ -131,20 +131,17 @@ const SocialDashboard: React.FC = () => {
   // Comment post
   const handleComment = async (postId: string) => {
     if (!commentText[postId]?.trim()) return;
-
     try {
       const res = await socialApi.post(`/comments/post/${postId}`, {
         content: commentText[postId],
       });
-
-      setPosts((prev) =>
-        prev.map((p) =>
+      setPosts(
+        posts.map((p) =>
           p._id === postId
             ? { ...p, comments: [...(p.comments || []), res.data] }
             : p
         )
       );
-
       setCommentText({ ...commentText, [postId]: "" });
     } catch (err) {
       console.error("Failed to comment", err);
@@ -225,7 +222,7 @@ const SocialDashboard: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          {posts.map((p) => (
+          {(posts || []).map((p) => (
             <div key={p._id} className="border rounded p-4 bg-white shadow">
               <div className="flex items-center gap-2 mb-2">
                 <img
@@ -251,20 +248,16 @@ const SocialDashboard: React.FC = () => {
                 onClick={() => handleLike(p)}
                 className="text-red-500 font-semibold mb-2"
               >
-                ❤ {p.likes?.length || 0}
+                ❤ {(p.likes || []).length}
               </button>
 
               {/* Comments */}
               <div className="space-y-1 mt-2">
-                {Array.isArray(p.comments) &&
-                  p.comments.map((c) => (
-                    <div
-                      key={c._id}
-                      className="text-sm bg-gray-100 p-1 rounded"
-                    >
-                      <strong>@{c.author?.username}</strong>: {c.content}
-                    </div>
-                  ))}
+                {(p.comments || []).map((c) => (
+                  <div key={c._id} className="text-sm bg-gray-100 p-1 rounded">
+                    <strong>@{c.author?.username}</strong>: {c.content}
+                  </div>
+                ))}
                 <div className="flex gap-2 mt-1">
                   <input
                     value={commentText[p._id] || ""}
@@ -296,7 +289,7 @@ const SocialDashboard: React.FC = () => {
         <div className="flex-1 flex overflow-hidden gap-2">
           {/* Users list */}
           <div className="w-32 border-r overflow-y-auto">
-            {chatUsers.map((u) => (
+            {(chatUsers || []).map((u) => (
               <div
                 key={u._id}
                 onClick={() => setActiveChat(u)}
@@ -313,8 +306,13 @@ const SocialDashboard: React.FC = () => {
           <div className="flex-1 flex flex-col">
             <div className="flex-1 overflow-y-auto p-2 border-b">
               {activeChat ? (
-                messages.map((m) => (
-                  <div key={m._id} className="mb-1 text-left">
+                (messages || []).map((m) => (
+                  <div
+                    key={m._id}
+                    className={`mb-1 ${
+                      m.from === "guest" ? "text-right" : "text-left"
+                    }`}
+                  >
                     <span className="inline-block p-2 rounded bg-gray-100">
                       {m.content}
                     </span>
