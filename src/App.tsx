@@ -77,14 +77,14 @@ const App = () => {
         <Route path="/wallet/callback" element={<SuccessCallback />} />
         <Route path="/social-dashboard" element={<SocialDashboard />} />
         <Route path="/social-post/:postId" element={<SocialPost />} />
-
+        <Route path="//posts/:postId" element={<SocialPost />} />
+        /posts
         {/* 📄 Static Info */}
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
-
         {/* 🔒 User Protected Routes */}
         <Route
           path="/profile"
@@ -110,7 +110,6 @@ const App = () => {
             </PrivateRoute>
           }
         />
-
         {/* 🔐 Admin Layout with Nested Protected Routes */}
         <Route
           path="/admin"
