@@ -49,9 +49,29 @@ const SocialDashboard: React.FC = () => {
   const [showChatSelect, setShowChatSelect] = useState(false);
   const [text, setText] = useState("");
   const socketRef = useRef<Socket | null>(null);
-  const token = localStorage.getItem("socialToken");
+  const token = localStorage.getItem("token");
 
   // Load posts & users
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen text-center">
+        <h2 className="text-xl font-bold mb-4">
+          Please login or create an account to access the social dashboard.
+        </h2>
+        <div className="flex gap-4">
+          <a href="/login" className="px-4 py-2 bg-blue-600 text-white rounded">
+            Login
+          </a>
+          <a
+            href="/register"
+            className="px-4 py-2 bg-gray-600 text-white rounded"
+          >
+            Register
+          </a>
+        </div>
+      </div>
+    );
+  }
   const loadPosts = async () => {
     if (!token) return;
     try {
