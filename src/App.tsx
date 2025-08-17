@@ -77,8 +77,8 @@ const App = () => {
         <Route path="/wallet/callback" element={<SuccessCallback />} />
         <Route path="/social-dashboard" element={<SocialDashboard />} />
         <Route path="/social-post/:postId" element={<SocialPost />} />
-        <Route path="//posts/:postId" element={<SocialPost />} />
-        /posts
+        <Route path="/posts/:postId" element={<SocialPost />} />
+
         {/* 📄 Static Info */}
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<ContactUs />} />
