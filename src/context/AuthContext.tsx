@@ -1,4 +1,4 @@
-// src/context/AuthContext.tsx
+// context/AuthContext.tsx
 import React, {
   createContext,
   useContext,
@@ -26,16 +26,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(() => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+
+  // 🔄 Rehydrate on page refresh
+  useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+    const storedToken = localStorage.getItem("token");
 
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem("token")
-  );
+    if (storedUser && storedToken) {
+      setUser(JSON.parse(storedUser));
+      setToken(storedToken);
+    }
+  }, []);
 
-  // keep localStorage in sync
+  // 🔄 Save to localStorage whenever user/token changes
   useEffect(() => {
     if (user && token) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -46,18 +51,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [user, token]);
 
-  // login function
   const login = async (email: string, password: string) => {
     const res = await axios.post(
       "https://ecommerce-server-or19.onrender.com/api/auth/login",
       { email, password }
     );
-
     setUser(res.data.user);
     setToken(res.data.token);
+
+    // persist immediately
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+    localStorage.setItem("token", res.data.token);
   };
 
-  // logout function
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -72,11 +78,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   );
 };
 
-// custom hook
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };
