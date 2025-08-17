@@ -48,6 +48,7 @@ import AdminDataRequests from "./pages/AdminDataRequests";
 import AdminRequests from "./pages/AdminRequests";
 import TransactionsList from "./pages/TransactionsList";
 import SocialDashboard from "./pages/SocialDashboard";
+import SocialPost from "./pages/SocialPost";
 
 const App = () => {
   return (
@@ -75,6 +76,7 @@ const App = () => {
         <Route path="/post-product" element={<PostProduct />} />
         <Route path="/wallet/callback" element={<SuccessCallback />} />
         <Route path="/social-dashboard" element={<SocialDashboard />} />
+        <Route path="/social-post/:postId" element={<SocialPost />} />
 
         {/* 📄 Static Info */}
         <Route path="/about-us" element={<AboutUs />} />

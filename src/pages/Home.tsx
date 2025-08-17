@@ -94,6 +94,11 @@ export default function Home() {
   >([]);
   const [text, setText] = useState("");
   const socketRef = useRef<Socket | null>(null);
+  const [socialPage, setSocialPage] = useState(1);
+  const [hasMoreSocial, setHasMoreSocial] = useState(true);
+  const POSTS_PER_PAGE = 10;
+  const currentPageRef = useRef(1);
+  const morePostsAvailableRef = useRef(true);
 
   const ctaRef = useRef(null);
   const isInView = useInView(ctaRef, { once: true });
@@ -127,35 +132,85 @@ export default function Home() {
       autoClose: 4000,
     });
 
-    // Load social feed
+    // Load social feed with pagination
     if (!token) return;
+
     const socket = io("https://social-blog-server-6g7j.onrender.com", {
       auth: { token },
     });
     socketRef.current = socket;
 
-    // Fetch initial social posts
-    axios
-      .get("https://social-blog-server-6g7j.onrender.com/api/posts", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setSocialPosts(res.data.data || []))
-      .catch(console.error);
+    // Pagination state
+    const POSTS_PER_PAGE = 10;
+    let currentPage = 1;
+    const morePostsAvailableRef = { current: true };
+
+    // Load posts by page
+    const loadSocialPosts = async (page: number) => {
+      try {
+        const res = await axios.get(
+          "https://social-blog-server-6g7j.onrender.com/api/posts",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { page, limit: POSTS_PER_PAGE },
+          }
+        );
+        const posts: SocialPost[] = res.data.data || [];
+
+        setSocialPosts((prev) => {
+          const existingIds = new Set(prev.map((p) => p._id));
+          const newPosts = posts.filter((p) => !existingIds.has(p._id));
+          morePostsAvailableRef.current = newPosts.length === POSTS_PER_PAGE;
+          return [...prev, ...newPosts];
+        });
+      } catch (err) {
+        console.error("Failed to load social posts", err);
+      }
+    };
+
+    // Load initial posts
+    loadSocialPosts(currentPage);
+
+    // Expose function to button
+    (window as any).loadMoreSocial = () => {
+      if (!morePostsAvailableRef.current) return;
+      currentPage += 1;
+      loadSocialPosts(currentPage);
+    };
 
     // Join user room for real-time updates
     if (user) socket.emit("join", user._id);
 
-    // Listen for new posts
+    // Listen for new posts in real-time
     socket.on("post:new", (post: SocialPost) => {
-      setSocialPosts((prev) => [post, ...prev]);
+      setSocialPosts((prev) => {
+        if (prev.some((p) => p._id === post._id)) return prev;
+        return [post, ...prev];
+      });
     });
 
-    // Cleanup
     return () => {
       socket.disconnect();
     };
   }, [user, token]);
 
+  // Function to load more posts on button click
+  const loadMoreSocial = () => {
+    if (!morePostsAvailableRef.current) return;
+    currentPageRef.current += 1;
+    const page = currentPageRef.current;
+    axios
+      .get("https://social-blog-server-6g7j.onrender.com/api/posts", {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { page, limit: POSTS_PER_PAGE },
+      })
+      .then((res) => {
+        const posts: SocialPost[] = res.data.data || [];
+        setSocialPosts((prev) => [...prev, ...posts]);
+        morePostsAvailableRef.current = posts.length === POSTS_PER_PAGE;
+      })
+      .catch(console.error);
+  };
   const filteredJobs = jobs
     .filter(
       (p) =>
@@ -506,51 +561,65 @@ export default function Home() {
           {socialPosts.length === 0 ? (
             <p className="text-white">No posts yet.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {socialPosts.map((post) => (
-                <div
-                  key={post._id}
-                  className="bg-white rounded-xl shadow-md p-4 flex flex-col"
-                >
-                  {/* Post Author */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <img
-                      src={post.author.avatarUrl || "https://placehold.co/32"}
-                      alt={post.author.username}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <strong>{post.author.username}</strong>
-                  </div>
-
-                  {/* Post Content */}
-                  <h3 className="font-semibold">{post.title}</h3>
-                  {post.imageUrl && (
-                    <img
-                      src={post.imageUrl}
-                      alt={post.title}
-                      className="w-full h-40 object-cover rounded-lg my-2"
-                    />
-                  )}
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {socialPosts.map((post) => (
                   <div
-                    className="text-gray-700 mb-2 line-clamp-3"
-                    dangerouslySetInnerHTML={{ __html: post.content }}
-                  />
+                    key={post._id}
+                    className="bg-white rounded-xl shadow-md p-4 flex flex-col"
+                  >
+                    {/* Post Author */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <img
+                        src={post.author.avatarUrl || "https://placehold.co/32"}
+                        alt={post.author.username}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <strong>{post.author.username}</strong>
+                    </div>
 
-                  {/* Likes & Comments */}
-                  <div className="flex justify-between items-center mt-auto">
-                    <span className="text-red-500 font-semibold">
-                      ❤ {post.likes?.length || 0}
-                    </span>
-                    <Link
-                      to={`/social-post/${post._id}`}
-                      className="text-blue-600 hover:underline text-sm"
-                    >
-                      💬 {post.comments?.length || 0} Comments
-                    </Link>
+                    {/* Post Content */}
+                    <h3 className="font-semibold">{post.title}</h3>
+                    {post.imageUrl && (
+                      <img
+                        src={post.imageUrl}
+                        alt={post.title}
+                        className="w-full h-40 object-cover rounded-lg my-2"
+                      />
+                    )}
+                    <div
+                      className="text-gray-700 mb-2 line-clamp-3"
+                      dangerouslySetInnerHTML={{ __html: post.content }}
+                    />
+
+                    {/* Likes & Comments */}
+                    <div className="flex justify-between items-center mt-auto">
+                      <span className="text-red-500 font-semibold">
+                        ❤ {post.likes?.length || 0}
+                      </span>
+                      <Link
+                        to={`/social-post/${post._id}`}
+                        className="text-blue-600 hover:underline text-sm"
+                      >
+                        💬 {post.comments?.length || 0} Comments
+                      </Link>
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {/* See More Posts Button */}
+              {socialPosts.length > 0 && (
+                <div className="text-center mt-4">
+                  <button
+                    onClick={() => (window as any).loadMoreSocial()}
+                    className="text-blue-400 hover:underline font-semibold"
+                  >
+                    See More Posts →
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
