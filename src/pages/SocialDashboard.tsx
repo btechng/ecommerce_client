@@ -46,11 +46,28 @@ const SocialDashboard: React.FC = () => {
   const socketRef = useRef<Socket | null>(null);
   const [text, setText] = useState<string>("");
 
-  // Load posts
+  // Load comments for a post
+  const loadComments = async (postId: string) => {
+    try {
+      const res = await socialApi.get(`/comments/post/${postId}`);
+      return res.data?.data || [];
+    } catch (err) {
+      console.error("Failed to load comments", err);
+      return [];
+    }
+  };
+
+  // Load posts with comments
   const loadPosts = async () => {
     try {
       const res = await socialApi.get("/posts");
-      setPosts(res.data?.data || []);
+      const postsWithComments = await Promise.all(
+        res.data?.data.map(async (p: Post) => {
+          const comments = await loadComments(p._id);
+          return { ...p, comments };
+        })
+      );
+      setPosts(postsWithComments);
     } catch (err) {
       console.error("Failed to load posts", err);
     }
@@ -106,7 +123,8 @@ const SocialDashboard: React.FC = () => {
         imageUrl,
       });
 
-      setPosts([res.data, ...posts]);
+      const comments = await loadComments(res.data._id);
+      setPosts([{ ...res.data, comments }, ...posts]);
       setNewTitle("");
       setNewContent("");
       setNewImage(null);
@@ -122,30 +140,29 @@ const SocialDashboard: React.FC = () => {
   const handleLike = async (p: Post) => {
     try {
       const res = await socialApi.post(`/posts/${p._id}/like`);
-      setPosts(posts.map((x) => (x._id === p._id ? res.data : x)));
+      const comments = await loadComments(p._id);
+      setPosts(
+        posts.map((x) => (x._id === p._id ? { ...res.data, comments } : x))
+      );
     } catch (err) {
       console.error("Failed to like post", err);
     }
   };
 
+  // Comment post
   const handleComment = async (postId: string) => {
     if (!commentText[postId]?.trim()) return;
-
     try {
-      const res = await socialApi.post(`/comments/post/${postId}`, {
+      await socialApi.post(`/comments/post/${postId}`, {
         content: commentText[postId],
       });
 
-      // Update post's comments in state
-      setPosts((prev) =>
-        prev.map((p) =>
-          p._id === postId
-            ? { ...p, comments: [...(p.comments || []), res.data] }
-            : p
+      const updatedComments = await loadComments(postId);
+      setPosts(
+        posts.map((p) =>
+          p._id === postId ? { ...p, comments: updatedComments } : p
         )
       );
-
-      // Clear input
       setCommentText({ ...commentText, [postId]: "" });
     } catch (err) {
       console.error("Failed to comment", err);
@@ -226,7 +243,7 @@ const SocialDashboard: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          {posts.map((p) => (
+          {(posts || []).map((p) => (
             <div key={p._id} className="border rounded p-4 bg-white shadow">
               <div className="flex items-center gap-2 mb-2">
                 <img
@@ -252,24 +269,16 @@ const SocialDashboard: React.FC = () => {
                 onClick={() => handleLike(p)}
                 className="text-red-500 font-semibold mb-2"
               >
-                ❤ {p.likes?.length || 0}
+                ❤ {(p.likes || []).length}
               </button>
 
               {/* Comments */}
               <div className="space-y-1 mt-2">
-                {/* Display existing comments safely */}
-                {Array.isArray(p.comments) && p.comments.length > 0
-                  ? p.comments.map((c) => (
-                      <div
-                        key={c._id}
-                        className="text-sm bg-gray-100 p-1 rounded"
-                      >
-                        <strong>@{c.author?.username}</strong>: {c.content}
-                      </div>
-                    ))
-                  : null}
-
-                {/* Add comment input */}
+                {(p.comments || []).map((c) => (
+                  <div key={c._id} className="text-sm bg-gray-100 p-1 rounded">
+                    <strong>@{c.author?.username}</strong>: {c.content}
+                  </div>
+                ))}
                 <div className="flex gap-2 mt-1">
                   <input
                     value={commentText[p._id] || ""}
@@ -301,7 +310,7 @@ const SocialDashboard: React.FC = () => {
         <div className="flex-1 flex overflow-hidden gap-2">
           {/* Users list */}
           <div className="w-32 border-r overflow-y-auto">
-            {chatUsers.map((u) => (
+            {(chatUsers || []).map((u) => (
               <div
                 key={u._id}
                 onClick={() => setActiveChat(u)}
@@ -318,7 +327,7 @@ const SocialDashboard: React.FC = () => {
           <div className="flex-1 flex flex-col">
             <div className="flex-1 overflow-y-auto p-2 border-b">
               {activeChat ? (
-                messages.map((m) => (
+                (messages || []).map((m) => (
                   <div key={m._id} className="mb-1 text-left">
                     <span className="inline-block p-2 rounded bg-gray-100">
                       {m.content}
