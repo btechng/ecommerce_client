@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { socialApi } from "../api/socialBlogApi";
 import { useAuth } from "../context/AuthContext";
 import { io, Socket } from "socket.io-client";
+import { Link } from "react-router-dom";
 
 interface User {
   _id: string;
@@ -118,9 +119,25 @@ const SocialPost: React.FC = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
           <h2 className="text-xl font-bold mb-2">🔒 Login Required</h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-6">
             Please login or create an account to view this post.
           </p>
+
+          {/* 👇 Action Buttons */}
+          <div className="flex justify-center gap-4">
+            <Link
+              to="/login"
+              className="px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+            >
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="px-5 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition"
+            >
+              Sign Up
+            </Link>
+          </div>
         </div>
       </div>
     );
