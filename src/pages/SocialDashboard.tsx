@@ -35,7 +35,7 @@ interface Message {
 }
 
 const SocialDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
@@ -52,6 +52,10 @@ const SocialDashboard: React.FC = () => {
   const token = localStorage.getItem("token");
 
   // Load posts & users
+
+  if (authLoading) {
+    return <p className="text-center">Loading...</p>;
+  }
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center">

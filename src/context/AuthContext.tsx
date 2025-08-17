@@ -1,3 +1,4 @@
+// src/context/AuthContext.tsx
 import React, {
   createContext,
   useContext,
@@ -16,7 +17,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  loading: boolean;
+  authLoading: boolean; // ✅ renamed to avoid conflicts
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -28,9 +29,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // 🔄 Rehydrate on page refresh
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
@@ -39,10 +39,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setUser(JSON.parse(storedUser));
       setToken(storedToken);
     }
-    setLoading(false);
+    setAuthLoading(false);
   }, []);
 
-  // 🔄 Save to localStorage whenever user/token changes
   useEffect(() => {
     if (user && token) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -60,20 +59,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     );
     setUser(res.data.user);
     setToken(res.data.token);
-
-    localStorage.setItem("user", JSON.stringify(res.data.user));
-    localStorage.setItem("token", res.data.token);
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout, authLoading }}>
       {children}
     </AuthContext.Provider>
   );
