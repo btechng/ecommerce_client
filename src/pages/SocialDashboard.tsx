@@ -35,8 +35,8 @@ interface Message {
   content: string;
 }
 
-const SocialDashboard: React.FC = () => {
-  const { user, token } = useAuth(); // ✅ use AuthContext instead of raw localStorage
+const SocialDashboard = () => {
+  const { user, token, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -48,14 +48,23 @@ const SocialDashboard: React.FC = () => {
   const [chatUsers, setChatUsers] = useState<User[]>([]);
   const [activeChat, setActiveChat] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [posting, setPosting] = useState(false); // ✅ renamed to avoid clash
   const [showChatSelect, setShowChatSelect] = useState(false);
   const [text, setText] = useState("");
   const socketRef = useRef<Socket | null>(null);
 
   const POSTS_PER_PAGE = 15;
 
-  // ✅ if not logged in, show login/register prompt
+  // ✅ If auth is still loading
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <p className="text-gray-700 text-lg font-medium">Loading...</p>
+      </div>
+    );
+  }
+
+  // ✅ If not logged in
   if (!token || !user) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -64,8 +73,6 @@ const SocialDashboard: React.FC = () => {
           <p className="text-gray-600 mb-6">
             Please login or create an account to access your dashboard.
           </p>
-
-          {/* 👇 Action Buttons */}
           <div className="flex justify-center gap-4">
             <Link
               to="/login"
@@ -85,7 +92,7 @@ const SocialDashboard: React.FC = () => {
     );
   }
 
-  // Load posts with pagination
+  // ✅ Load posts with pagination
   const loadPosts = async (nextPage: number) => {
     try {
       const res = await socialApi.get("/posts", {
@@ -100,7 +107,7 @@ const SocialDashboard: React.FC = () => {
     }
   };
 
-  // Load chat users
+  // ✅ Load chat users
   const loadUsers = async () => {
     try {
       const res = await socialApi.get("/users", {
@@ -112,7 +119,7 @@ const SocialDashboard: React.FC = () => {
     }
   };
 
-  // Initialize Socket.IO
+  // ✅ Initialize Socket.IO
   useEffect(() => {
     loadPosts(page);
     loadUsers();
@@ -145,10 +152,10 @@ const SocialDashboard: React.FC = () => {
     loadPosts(nextPage);
   };
 
-  // Create post
+  // ✅ Create post
   const handlePost = async () => {
     if (!newTitle || !newContent) return;
-    setLoading(true);
+    setPosting(true);
     try {
       let imageUrl = "";
       if (newImage) {
@@ -178,11 +185,11 @@ const SocialDashboard: React.FC = () => {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setPosting(false);
     }
   };
 
-  // Like post
+  // ✅ Like post
   const handleLike = async (p: Post) => {
     try {
       const res = await socialApi.post(
@@ -197,7 +204,7 @@ const SocialDashboard: React.FC = () => {
     }
   };
 
-  // Send comment
+  // ✅ Send comment
   const handleComment = async (postId: string) => {
     const content = commentText[postId]?.trim();
     if (!content) return;
@@ -222,14 +229,14 @@ const SocialDashboard: React.FC = () => {
     }
   };
 
-  // Share post
+  // ✅ Share post
   const handleShare = (p: Post) => {
     const postUrl = `${window.location.origin}/posts/${p._id}`;
     navigator.clipboard.writeText(postUrl);
     alert("Post link copied!");
   };
 
-  // Chat messages
+  // ✅ Chat messages
   useEffect(() => {
     if (!activeChat || !user?._id) return;
 
@@ -305,9 +312,9 @@ const SocialDashboard: React.FC = () => {
           <button
             onClick={handlePost}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            disabled={loading}
+            disabled={posting}
           >
-            {loading ? "Posting..." : "Post"}
+            {posting ? "Posting..." : "Post"}
           </button>
         </div>
 
