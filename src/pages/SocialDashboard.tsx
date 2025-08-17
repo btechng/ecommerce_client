@@ -36,7 +36,7 @@ interface Message {
 }
 
 const SocialDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth(); // ✅ use AuthContext instead of raw localStorage
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -52,17 +52,17 @@ const SocialDashboard: React.FC = () => {
   const [showChatSelect, setShowChatSelect] = useState(false);
   const [text, setText] = useState("");
   const socketRef = useRef<Socket | null>(null);
-  const token = localStorage.getItem("socialToken");
+
   const POSTS_PER_PAGE = 15;
 
   // ✅ if not logged in, show login/register prompt
   if (!token || !user) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
           <h2 className="text-xl font-bold mb-2">🔒 Login Required</h2>
           <p className="text-gray-600 mb-6">
-            Please login or create an account to view this post.
+            Please login or create an account to access your dashboard.
           </p>
 
           {/* 👇 Action Buttons */}
@@ -87,7 +87,6 @@ const SocialDashboard: React.FC = () => {
 
   // Load posts with pagination
   const loadPosts = async (nextPage: number) => {
-    if (!token) return;
     try {
       const res = await socialApi.get("/posts", {
         headers: { Authorization: `Bearer ${token}` },
@@ -103,7 +102,6 @@ const SocialDashboard: React.FC = () => {
 
   // Load chat users
   const loadUsers = async () => {
-    if (!token) return;
     try {
       const res = await socialApi.get("/users", {
         headers: { Authorization: `Bearer ${token}` },
@@ -149,7 +147,7 @@ const SocialDashboard: React.FC = () => {
 
   // Create post
   const handlePost = async () => {
-    if (!newTitle || !newContent || !token) return;
+    if (!newTitle || !newContent) return;
     setLoading(true);
     try {
       let imageUrl = "";
@@ -186,7 +184,6 @@ const SocialDashboard: React.FC = () => {
 
   // Like post
   const handleLike = async (p: Post) => {
-    if (!token) return;
     try {
       const res = await socialApi.post(
         `/posts/${p._id}/like`,
@@ -200,10 +197,10 @@ const SocialDashboard: React.FC = () => {
     }
   };
 
-  // Send comment safely
+  // Send comment
   const handleComment = async (postId: string) => {
     const content = commentText[postId]?.trim();
-    if (!token || !content) return;
+    if (!content) return;
 
     try {
       const res = await socialApi.post(
@@ -254,7 +251,7 @@ const SocialDashboard: React.FC = () => {
   }, [activeChat, user?._id]);
 
   const sendMessage = async () => {
-    if (!text.trim() || !activeChat || !token) return;
+    if (!text.trim() || !activeChat) return;
     try {
       const res = await socialApi.post(
         `/chat/${activeChat._id}`,
@@ -400,7 +397,7 @@ const SocialDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Hover Chat Button: Middle Right */}
+      {/* Hover Chat Button */}
       <div className="fixed right-5 top-1/2 transform -translate-y-1/2">
         <button
           className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700"
@@ -409,6 +406,7 @@ const SocialDashboard: React.FC = () => {
           <MessageCircle />
         </button>
       </div>
+
       {/* Chat Select Modal */}
       {showChatSelect && (
         <ChatSelect

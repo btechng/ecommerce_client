@@ -1,3 +1,4 @@
+// src/context/AuthContext.tsx
 import React, {
   createContext,
   useContext,
@@ -34,6 +35,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     localStorage.getItem("token")
   );
 
+  // keep localStorage in sync
   useEffect(() => {
     if (user && token) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -44,18 +46,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [user, token]);
 
+  // login function
   const login = async (email: string, password: string) => {
     const res = await axios.post(
       "https://ecommerce-server-or19.onrender.com/api/auth/login",
       { email, password }
     );
+
     setUser(res.data.user);
     setToken(res.data.token);
   };
 
+  // logout function
   const logout = () => {
     setUser(null);
     setToken(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
   return (
@@ -65,8 +72,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   );
 };
 
+// custom hook
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
   return context;
 };
