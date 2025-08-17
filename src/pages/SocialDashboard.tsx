@@ -1,9 +1,7 @@
+// src/pages/SocialDashboard.tsx
 import React, { useEffect, useState, useRef } from "react";
 import { socialApi } from "../api/socialBlogApi";
 import { io, Socket } from "socket.io-client";
-import { useAuth } from "../context/AuthContext";
-import { MessageCircle, Share2 } from "lucide-react";
-import ChatSelect from "./ChatSelect";
 
 interface User {
   _id: string;
@@ -35,85 +33,59 @@ interface Message {
 }
 
 const SocialDashboard: React.FC = () => {
-  const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [newTitle, setNewTitle] = useState("");
-  const [newContent, setNewContent] = useState("");
+  const [newTitle, setNewTitle] = useState<string>("");
+  const [newContent, setNewContent] = useState<string>("");
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [chatUsers, setChatUsers] = useState<User[]>([]);
   const [activeChat, setActiveChat] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showChatSelect, setShowChatSelect] = useState(false);
-  const [text, setText] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
   const socketRef = useRef<Socket | null>(null);
-  const token = localStorage.getItem("token");
+  const [text, setText] = useState<string>("");
 
-  // Load posts & users
+  // Load posts
   const loadPosts = async () => {
-    if (!token) return;
     try {
-      const res = await socialApi.get("/posts", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await socialApi.get("/posts");
       setPosts(res.data?.data || []);
     } catch (err) {
       console.error("Failed to load posts", err);
     }
   };
 
+  // Load chat users
   const loadUsers = async () => {
-    if (!token) return;
     try {
-      const res = await socialApi.get("/users", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setChatUsers(res.data?.filter((u: User) => u._id !== user?._id) || []);
+      const res = await socialApi.get("/users");
+      setChatUsers(res.data || []);
     } catch (err) {
       console.error("Failed to load users", err);
     }
   };
 
-  // Initialize Socket.IO
   useEffect(() => {
     loadPosts();
     loadUsers();
 
+    // Setup socket.io
     socketRef.current = io(
       import.meta.env.VITE_SOCIAL_BLOG_BASE ||
         "https://social-blog-server-6g7j.onrender.com"
     );
 
-    if (user?._id) socketRef.current.emit("join", user._id);
-
-    // Real-time events
-    socketRef.current.on("post:new", (p: Post) => {
-      setPosts((prev) => [p, ...prev]);
-    });
-
-    socketRef.current.on("post:like", (updatedPost: Post) => {
-      setPosts((prev) =>
-        prev.map((p) => (p._id === updatedPost._id ? updatedPost : p))
-      );
-    });
-
-    socketRef.current.on("post:comment", (updatedPost: Post) => {
-      setPosts((prev) =>
-        prev.map((p) => (p._id === updatedPost._id ? updatedPost : p))
-      );
-    });
-
     return () => {
       socketRef.current?.disconnect();
     };
-  }, [user]);
+  }, []);
 
-  // Create post
+  // Post editor
   const handlePost = async () => {
-    if (!newTitle || !newContent || !token) return;
+    if (!newTitle || !newContent) return;
     setLoading(true);
+
     try {
       let imageUrl = "";
       if (newImage) {
@@ -128,22 +100,19 @@ const SocialDashboard: React.FC = () => {
         imageUrl = cloudData.secure_url;
       }
 
-      const res = await socialApi.post(
-        "/posts",
-        { title: newTitle, content: newContent, imageUrl },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await socialApi.post("/posts", {
+        title: newTitle,
+        content: newContent,
+        imageUrl,
+      });
 
-      // Emit to server so others see the new post
-      socketRef.current?.emit("post:new", res.data);
-
-      setPosts((prev) => [res.data, ...prev]);
+      setPosts([res.data, ...posts]);
       setNewTitle("");
       setNewContent("");
       setNewImage(null);
       setImagePreview(null);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to create post", err);
     } finally {
       setLoading(false);
     }
@@ -151,86 +120,72 @@ const SocialDashboard: React.FC = () => {
 
   // Like post
   const handleLike = async (p: Post) => {
-    if (!token) return;
-
     try {
-      const res = await socialApi.post(
-        `/posts/${p._id}/like`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      socketRef.current?.emit("post:like", res.data);
-      setPosts((prev) => prev.map((x) => (x._id === p._id ? res.data : x)));
+      const res = await socialApi.post(`/posts/${p._id}/like`);
+      setPosts(posts.map((x) => (x._id === p._id ? res.data : x)));
     } catch (err) {
-      console.error(err);
+      console.error("Failed to like post", err);
     }
   };
 
   // Comment post
   const handleComment = async (postId: string) => {
-    if (!token || !commentText[postId]?.trim()) return;
+    if (!commentText[postId]?.trim()) return;
 
     try {
-      const res = await socialApi.post(
-        `/posts/${postId}/comment`,
-        { content: commentText[postId] },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      socketRef.current?.emit("post:comment", res.data);
+      const res = await socialApi.post(`/comments/post/${postId}`, {
+        content: commentText[postId],
+      });
+
       setPosts((prev) =>
         prev.map((p) =>
-          p._id === postId ? { ...p, comments: [...p.comments, res.data] } : p
+          p._id === postId
+            ? { ...p, comments: [...(p.comments || []), res.data] }
+            : p
         )
       );
+
       setCommentText({ ...commentText, [postId]: "" });
     } catch (err) {
-      console.error(err);
+      console.error("Failed to comment", err);
     }
   };
 
-  // Share post
-  const handleShare = (post: Post) => {
-    const postUrl = `${window.location.origin}/posts/${post._id}`;
-    navigator.clipboard.writeText(postUrl);
-    alert("Post link copied!");
-  };
-
-  // Chat messages
+  // Chat logic
   useEffect(() => {
-    if (!activeChat || !user?._id) return;
+    if (!activeChat) return;
 
-    socketRef.current?.emit("dm:join", { me: user._id, other: activeChat._id });
+    socketRef.current?.emit("dm:join", { me: "guest", other: activeChat._id });
 
     const handler = (msg: Message) => {
-      if (
-        [msg.from, msg.to].includes(user._id) &&
-        [msg.from, msg.to].includes(activeChat._id)
-      ) {
+      if ([msg.from, msg.to].includes(activeChat._id)) {
         setMessages((prev) => [...prev, msg]);
       }
     };
 
     socketRef.current?.on("dm:new", handler);
-
-    return (): void => {
-      if (socketRef.current) {
-        socketRef.current.off("dm:new", handler);
-      }
+    return () => {
+      socketRef.current?.off("dm:new", handler);
     };
-  }, [activeChat, user?._id]);
+  }, [activeChat]);
 
   const sendMessage = async () => {
-    if (!text.trim() || !activeChat || !token) return;
+    if (!text.trim() || !activeChat) return;
     try {
-      const res = await socialApi.post(
-        `/chat/${activeChat._id}`,
-        { content: text },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await socialApi.post(`/chat/${activeChat._id}`, {
+        content: text,
+      });
       setMessages((prev) => [...prev, res.data]);
       setText("");
     } catch (err) {
-      console.error(err);
+      console.error("Failed to send message", err);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setNewImage(e.target.files[0]);
+      setImagePreview(URL.createObjectURL(e.target.files[0]));
     }
   };
 
@@ -238,7 +193,6 @@ const SocialDashboard: React.FC = () => {
     <div className="max-w-7xl mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Feed & Post Editor */}
       <div className="md:col-span-2 space-y-4">
-        {/* Post Editor */}
         <div className="p-4 border rounded shadow bg-white">
           <h2 className="text-xl font-bold mb-2">Create Post</h2>
           <input
@@ -249,21 +203,11 @@ const SocialDashboard: React.FC = () => {
           />
           <textarea
             className="w-full border p-2 rounded mb-2"
-            placeholder="Content"
+            placeholder="Content (HTML allowed)"
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
           />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              if (e.target.files?.[0]) {
-                setNewImage(e.target.files[0]);
-                setImagePreview(URL.createObjectURL(e.target.files[0]));
-              }
-            }}
-            className="mb-2"
-          />
+          <input type="file" accept="image/*" onChange={handleImageChange} />
           {imagePreview && (
             <img
               src={imagePreview}
@@ -280,7 +224,6 @@ const SocialDashboard: React.FC = () => {
           </button>
         </div>
 
-        {/* Posts Feed */}
         <div className="space-y-4">
           {posts.map((p) => (
             <div key={p._id} className="border rounded p-4 bg-white shadow">
@@ -304,32 +247,24 @@ const SocialDashboard: React.FC = () => {
                 dangerouslySetInnerHTML={{ __html: p.content }}
                 className="my-2"
               />
-
-              <div className="flex items-center gap-4 mb-2">
-                <button
-                  onClick={() => handleLike(p)}
-                  className={`font-semibold ${
-                    p.likes.includes(user?._id!) ? "text-red-500" : ""
-                  }`}
-                >
-                  ❤ {p.likes.length}
-                </button>
-
-                <button
-                  onClick={() => handleShare(p)}
-                  className="flex items-center gap-1 text-blue-600"
-                >
-                  <Share2 size={16} /> Share
-                </button>
-              </div>
+              <button
+                onClick={() => handleLike(p)}
+                className="text-red-500 font-semibold mb-2"
+              >
+                ❤ {p.likes?.length || 0}
+              </button>
 
               {/* Comments */}
               <div className="space-y-1 mt-2">
-                {p.comments.map((c) => (
-                  <div key={c._id} className="text-sm bg-gray-100 p-1 rounded">
-                    <strong>@{c.author.username}</strong>: {c.content}
-                  </div>
-                ))}
+                {Array.isArray(p.comments) &&
+                  p.comments.map((c) => (
+                    <div
+                      key={c._id}
+                      className="text-sm bg-gray-100 p-1 rounded"
+                    >
+                      <strong>@{c.author?.username}</strong>: {c.content}
+                    </div>
+                  ))}
                 <div className="flex gap-2 mt-1">
                   <input
                     value={commentText[p._id] || ""}
@@ -355,26 +290,59 @@ const SocialDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Chat Hover Button */}
-      <div className="fixed bottom-5 right-5">
-        <button
-          className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700"
-          onClick={() => setShowChatSelect(true)}
-        >
-          <MessageCircle />
-        </button>
-      </div>
+      {/* Chat */}
+      <div className="p-4 border rounded shadow bg-white flex flex-col h-[80vh]">
+        <h2 className="text-xl font-bold mb-2">Chat</h2>
+        <div className="flex-1 flex overflow-hidden gap-2">
+          {/* Users list */}
+          <div className="w-32 border-r overflow-y-auto">
+            {chatUsers.map((u) => (
+              <div
+                key={u._id}
+                onClick={() => setActiveChat(u)}
+                className={`p-2 cursor-pointer ${
+                  activeChat?._id === u._id ? "bg-blue-100" : ""
+                }`}
+              >
+                {u.username}
+              </div>
+            ))}
+          </div>
 
-      {showChatSelect && (
-        <ChatSelect
-          users={chatUsers}
-          onClose={() => setShowChatSelect(false)}
-          onSelect={(u) => {
-            setActiveChat(u);
-            setShowChatSelect(false);
-          }}
-        />
-      )}
+          {/* Messages */}
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-2 border-b">
+              {activeChat ? (
+                messages.map((m) => (
+                  <div key={m._id} className="mb-1 text-left">
+                    <span className="inline-block p-2 rounded bg-gray-100">
+                      {m.content}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div>Select a user to chat</div>
+              )}
+            </div>
+            {activeChat && (
+              <div className="flex gap-2 mt-2">
+                <input
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  className="flex-1 border p-2 rounded"
+                  placeholder="Type a message..."
+                />
+                <button
+                  onClick={sendMessage}
+                  className="px-3 py-2 bg-blue-600 text-white rounded"
+                >
+                  Send
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
